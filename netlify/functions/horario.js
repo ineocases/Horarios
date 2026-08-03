@@ -1,4 +1,4 @@
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore, doc, getDoc } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -15,22 +15,23 @@ export async function handler(event) {
     const token = event.queryStringParameters && event.queryStringParameters.token;
     if (!token) {
         return {
-            statusCode: 400,
+            statusCode: 200,
             headers: { "Content-Type": "text/plain; charset=utf-8" },
             body: "Falta el token."
         };
     }
 
     try {
-        const app = initializeApp(firebaseConfig);
+        // FIX 1: Evitar que Firebase colapse si la función se ejecuta más de una vez (El bug de Netlify)
+        const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
         const db = getFirestore(app);
 
         const widgetSnap = await getDoc(doc(db, "widgets", token));
         if (!widgetSnap.exists()) {
             return {
-                statusCode: 404,
+                statusCode: 200,
                 headers: { "Content-Type": "text/plain; charset=utf-8" },
-                body: "Token inválido."
+                body: "❌ Token inválido o expirado."
             };
         }
 
@@ -38,13 +39,14 @@ export async function handler(event) {
         const planillaSnap = await getDoc(doc(db, "planilla_estetica", uid));
         if (!planillaSnap.exists()) {
             return {
-                statusCode: 404,
+                statusCode: 200,
                 headers: { "Content-Type": "text/plain; charset=utf-8" },
-                body: "Sin datos."
+                body: "📅 Aún no tienes horarios guardados."
             };
         }
 
-        const datos = planillaSnap.data();
+        // FIX 2: Prevenir error si la planilla existe pero está vacía
+        const datos = planillaSnap.data() || {};
         const tareas = datos.tareas || [];
         const filasDefinidas = datos.filas || ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00'];
 
@@ -98,10 +100,11 @@ export async function handler(event) {
         };
 
     } catch (error) {
+        // FIX 3: Mandar el texto real del error al widget en vez de hacer que colapse
         return {
-            statusCode: 500,
+            statusCode: 200, 
             headers: { "Content-Type": "text/plain; charset=utf-8" },
-            body: "Error en el servidor."
+            body: `Error interno: ${error.message}`
         };
     }
 }

@@ -183,3 +183,63 @@ body.exportando .solo-editar { display: none !important; }
   #capture-area { padding: 15px 10px; }
   .tabla-horario th, .tabla-horario td { padding: 8px 4px; font-size: 11px; }
 }
+/* --- MODAL WIDGET TUTORIAL --- */
+.modal-tutorial { 
+  max-width: 480px; 
+}
+.pasos-tutorial { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 22px; /* Gran espacio para que no se vea amontonado */
+  margin-top: 24px; 
+  text-align: left; 
+}
+.paso { 
+  display: flex; 
+  gap: 16px; 
+  align-items: flex-start; 
+}
+.paso-numero { 
+  background: var(--rosa-pastel); 
+  color: var(--rosa-texto); 
+  width: 32px; 
+  height: 32px; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  border-radius: 50%; 
+  font-weight: 700; 
+  font-size: 15px; 
+  flex-shrink: 0; 
+  border: 1px solid var(--rosa-texto); 
+}
+.paso-texto { 
+  font-size: 14px; 
+  color: var(--gris-texto); 
+  line-height: 1.6; 
+  margin-top: 4px; 
+}
+.paso-texto b { 
+  color: var(--rosa-texto); 
+}
+.url-box { 
+  display: flex; 
+  gap: 10px; 
+  margin-top: 12px; 
+}
+.url-box input { 
+  flex: 1; 
+  padding: 12px; 
+  font-size: 12px; 
+  border-radius: 12px; 
+  border: 1px solid var(--borde-tarjeta); 
+  background: #faf8f9; 
+  color: #5C4A47; 
+  font-family: monospace; 
+}
+.url-box button { 
+  padding: 10px 18px; 
+  font-size: 13px; 
+  border-radius: 12px; 
+  white-space: nowrap; 
+}

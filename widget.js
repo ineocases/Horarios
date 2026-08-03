@@ -11,10 +11,7 @@ const firebaseConfig = {
   measurementId: "G-0VGK0HWR4B"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-// Inyectar estilos limpios para las secciones y el diseño de "Día libre"
+// Estilos visuales integrados
 const estiloWidgetExtra = document.createElement('style');
 estiloWidgetExtra.innerHTML = `
   .seccion-dia { margin-bottom: 16px; }
@@ -22,25 +19,31 @@ estiloWidgetExtra.innerHTML = `
   .titulo-dia { font-size: 13px; font-weight: bold; color: #d6336c; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
   .dia-libre { background: #faf8f9; border: 2px dashed #ffb6c1; color: #b56576; text-align: center; padding: 12px; border-radius: 12px; font-size: 13px; font-weight: 500; margin-bottom: 8px; }
   .tarea-item { background: #fff2f4; border-left: 4px solid #ff4d6d; padding: 10px 14px; border-radius: 12px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; font-size: 14px; }
+  .estado-vacio { text-align: center; color: #888; font-size: 14px; padding: 20px 0; }
 `;
 document.head.appendChild(estiloWidgetExtra);
 
-async function renderizarWidgetVisual() {
+document.addEventListener('DOMContentLoaded', async () => {
     const contenedor = document.getElementById('contenedor-visual');
-    
+    if (!contenedor) return;
+
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token');
 
     if (!token) {
-        contenedor.innerHTML = `<div class="estado-vacio">❌ Falta el token de acceso.</div>`;
+        contenedor.innerHTML = `<div class="estado-vacio">❌ Falta el token en la URL. Volvé a generarlo desde la app.</div>`;
         return;
     }
 
     try {
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Buscar el token en Firebase
         const widgetSnap = await getDoc(doc(db, "widgets", token));
         
         if (!widgetSnap.exists()) {
-            contenedor.innerHTML = `<div class="estado-vacio">❌ Token inválido o expirado.</div>`;
+            contenedor.innerHTML = `<div class="estado-vacio">❌ Token inválido o expirado. Generá uno nuevo en tu app.</div>`;
             return;
         }
 
@@ -48,7 +51,7 @@ async function renderizarWidgetVisual() {
         const planillaSnap = await getDoc(doc(db, "planilla_estetica", uid));
         
         if (!planillaSnap.exists()) {
-            contenedor.innerHTML = `<div class="estado-vacio">📅 No hay datos en tu planilla.</div>`;
+            contenedor.innerHTML = `<div class="estado-vacio">📅 No hay datos guardados en tu planilla.</div>`;
             return;
         }
 
@@ -64,11 +67,10 @@ async function renderizarWidgetVisual() {
         const mananaIndex = (hoyIndex + 1) % 7;
         const mananaStr = diasSemana[mananaIndex];
 
-        // Función para agrupar tareas consecutivas con la misma nota
+        // Agrupar horas consecutivas con la misma nota
         function agruparTareasDelDia(tareasDelDia) {
             if (!tareasDelDia || tareasDelDia.length === 0) return [];
 
-            // Ordenar según el orden real de las filas de la tabla
             tareasDelDia.sort((a, b) => filasDefinidas.indexOf(a.row) - filasDefinidas.indexOf(b.row));
 
             const grupos = [];
@@ -113,7 +115,6 @@ async function renderizarWidgetVisual() {
         const gruposHoy = agruparTareasDelDia(tareas.filter(t => t.col === hoyStr));
         const gruposManana = agruparTareasDelDia(tareas.filter(t => t.col === mananaStr));
 
-        // HTML para renderizar cada bloque de día
         function renderizarBloque(nombreDia, etiqueta, grupos) {
             let contenidoHtml = '';
             
@@ -151,8 +152,7 @@ async function renderizarWidgetVisual() {
                                renderizarBloque(mananaStr, '📅 MAÑANA', gruposManana);
 
     } catch (error) {
-        contenedor.innerHTML = `<div class="estado-vacio">⚠️ Error al cargar: ${error.message}</div>`;
+        console.error(error);
+        contenedor.innerHTML = `<div class="estado-vacio">⚠️ Error de conexión: ${error.message}</div>`;
     }
-}
-
-renderizarWidgetVisual();
+});

@@ -556,27 +556,27 @@ function mostrarPantalla(id) {
   if (target) target.classList.remove('oculto');
 }
 // ==========================
-// INSTALAR WIDGET Y TUTORIAL
+// INSTALAR WIDGET SCRIPTABLE
 // ==========================
+
+$("#btn-instalar-widget")?.addEventListener("click", instalarWidget);
 
 async function instalarWidget() {
   if (!usuarioActual) {
-    alert("Debes iniciar sesión.");
+    alert("Debes iniciar sesión para generar tu widget.");
     return;
   }
 
   try {
     let token;
     
-    // 1. Buscamos en Firebase si este usuario YA TIENE un token creado
+    // 1. Buscar si el usuario ya tiene token
     const q = query(collection(db, "widgets"), where("uid", "==", usuarioActual.uid));
     const querySnapshot = await getDocs(q);
 
     if (!querySnapshot.empty) {
-      // OPCIÓN A: Ya existe. Reutilizamos su token único.
       token = querySnapshot.docs[0].id;
     } else {
-      // OPCIÓN B: Es su primera vez. Le creamos un token nuevo.
       token = (typeof crypto !== 'undefined' && crypto.randomUUID) 
               ? crypto.randomUUID() 
               : Date.now().toString(36) + Math.random().toString(36).substring(2);
@@ -585,56 +585,66 @@ async function instalarWidget() {
       await setDoc(widgetRef, {
         uid: usuarioActual.uid,
         activo: true,
-        // Usamos serverTimestamp() de nuevo para que Netlify NO tire "Error de servidor"
-        creado: serverTimestamp() 
+        creado: serverTimestamp()
       });
     }
     
-    // 2. Armamos la URL con su token único
+    // 2. Generar el código para Scriptable
     const urlNetlify = `https://friendly-melba-0783ef.netlify.app/.netlify/functions/horario?token=${token}`;
     
-    // 3. Mostramos la URL en la ventana emergente
-    const inputUrl = document.querySelector("#widget-url");
-    if (inputUrl) inputUrl.value = urlNetlify;
+    const codigoScriptable = `const url = "${urlNetlify}";
+const req = new Request(url);
+const res = await req.loadString();
+let widget = new ListWidget();
+widget.backgroundColor = new Color("#FFF0F3");
+widget.url = "https://ineocases.github.io/Horarios/";
+let header = widget.addText("✨ Tu Horario");
+header.font = Font.boldSystemFont(14);
+header.textColor = new Color("#D6336C");
+widget.addSpacer(8);
+let contenido = widget.addText(res);
+contenido.font = Font.systemFont(12);
+contenido.textColor = new Color("#5C4A47");
+if (config.runsInWidget) { Script.setWidget(widget); } else { widget.presentSmall(); }
+Script.complete();`;
+
+    // 3. Pasar el código al botón de copiar y mostrar el modal
+    const btnCopiar = $("#btn-copiar-url");
+    if (btnCopiar) btnCopiar.dataset.codigo = codigoScriptable;
     
-    const modalWidget = document.querySelector("#modal-widget");
-    if (modalWidget) modalWidget.classList.remove("oculto");
+    $("#modal-widget")?.classList.remove("oculto");
 
   } catch (e) {
     console.error("Error al gestionar el widget:", e);
-    alert("Error al conectar con la base de datos. Revisa la consola.");
+    alert("Error al generar el código. Revisa la consola.");
   }
 }
-// ------------------------------------
-// Eventos del Modal del Widget
-// ------------------------------------
-const btnCerrarWidget = document.querySelector("#btn-cerrar-widget");
-if (btnCerrarWidget) {
-  btnCerrarWidget.addEventListener("click", () => {
-    document.querySelector("#modal-widget").classList.add("oculto");
-  });
-}
 
-const btnCopiarUrl = document.querySelector("#btn-copiar-url");
-if (btnCopiarUrl) {
-  btnCopiarUrl.addEventListener("click", () => {
-    const inputUrl = document.querySelector("#widget-url");
-    if (inputUrl && inputUrl.value) {
-      // Intenta copiar al portapapeles de forma segura
-      navigator.clipboard.writeText(inputUrl.value).then(() => {
-        const textoOriginal = btnCopiarUrl.textContent;
-        btnCopiarUrl.textContent = "¡Copiado!";
-        btnCopiarUrl.style.background = "#E87A90";
-        btnCopiarUrl.style.color = "white";
-        
-        setTimeout(() => {
-          btnCopiarUrl.textContent = textoOriginal;
-          btnCopiarUrl.style.background = "";
-          btnCopiarUrl.style.color = "";
-        }, 2000);
-      }).catch(err => {
-        alert("Tu navegador no permite copiar automáticamente. Por favor, selecciona el enlace y cópialo manualmente.");
-      });
-    }
-  });
-}
+// ------------------------------------
+// Eventos del Modal
+// ------------------------------------
+$("#btn-cerrar-widget")?.addEventListener("click", () => {
+  $("#modal-widget")?.classList.add("oculto");
+});
+
+$("#btn-copiar-url")?.addEventListener("click", (e) => {
+  const btn = e.target;
+  const codigo = btn.dataset.codigo;
+  
+  if (codigo) {
+    navigator.clipboard.writeText(codigo).then(() => {
+      const textoOriginal = btn.textContent;
+      btn.textContent = "¡Código Copiado! ✨";
+      btn.style.background = "#E87A90";
+      btn.style.color = "white";
+      
+      setTimeout(() => {
+        btn.textContent = textoOriginal;
+        btn.style.background = "";
+        btn.style.color = "";
+      }, 2500);
+    }).catch(() => {
+      alert("Tu navegador bloqueó la copia automática.");
+    });
+  }
+});

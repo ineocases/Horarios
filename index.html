@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mi Horario Elegante ✨</title>
+  <title>Mi Semana Estética ✨</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌸</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,600&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
@@ -20,97 +20,86 @@
 
   <!-- Pantalla de Login / Registro -->
   <div id="pantalla-login" class="oculto">
-    <div>
-      <div class="login-card">
-        <h1>Mi Horario</h1>
-        <p class="subtitulo">Organiza tu semana con elegancia</p>
-        <div class="login-tabs">
-          <button type="button" id="tab-login" class="tab activo">Iniciar sesión</button>
-          <button type="button" id="tab-registro" class="tab">Crear cuenta</button>
-        </div>
-        <form id="form-login">
-          <input type="email" id="login-email" placeholder="Correo electrónico" required>
-          <input type="password" id="login-password" placeholder="Contraseña (mín 6 carácteres)" required minlength="6">
-          <p id="login-error" class="error oculto"></p>
-          <button type="submit" id="btn-login-submit" class="btn-principal">Ingresar</button>
-        </form>
+    <div class="login-card">
+      <h1>Mi Semana 🌸</h1>
+      <p class="subtitulo">Organiza tus días con estilo</p>
+      <div class="login-tabs">
+        <button type="button" id="tab-login" class="tab activo">Iniciar sesión</button>
+        <button type="button" id="tab-registro" class="tab">Crear cuenta</button>
       </div>
+      <form id="form-login">
+        <input type="email" id="login-email" placeholder="Correo electrónico" required>
+        <input type="password" id="login-password" placeholder="Contraseña (mín 6 carácteres)" required minlength="6">
+        <p id="login-error" class="error oculto"></p>
+        <button type="submit" id="btn-login-submit" class="btn-principal">Ingresar</button>
+      </form>
     </div>
   </div>
 
   <!-- Aplicación Principal -->
   <div id="pantalla-app" class="oculto">
     <nav class="navbar">
-      <span class="logo">🌸 Horario</span>
+      <span class="logo">🌸 Planner Estético</span>
       <div class="nav-derecha">
-        <span id="banner-error" class="badge-error oculto">Modo Local Activo</span>
+        <span id="banner-error" class="badge-error oculto">Modo Local</span>
         <span id="usuario-email"></span>
         <button id="btn-logout" class="btn-secundario oculto" type="button">Salir</button>
       </div>
     </nav>
 
-    <div id="mensaje-guardado" class="toast oculto">Sincronizado ✓</div>
+    <div id="mensaje-guardado" class="toast oculto">Sincronizado 💖</div>
 
     <main>
       <div class="controles-superiores solo-editar">
-        <button id="btn-abrir-config" class="btn-secundario">⚙️ Configurar Filas y Columnas</button>
+        <button id="btn-abrir-config" class="btn-secundario">⚙️ Cambiar Días / Categorías</button>
       </div>
 
-      <!-- Esta es la hoja A4 -->
+      <!-- Contenedor Estilo Planner (Capturable) -->
       <div id="capture-area">
-        <div class="decoracion-clip">📎</div>
-        <div class="decoracion-sparkle">✨</div>
-        
-        <div class="titulo-horario">
-          <div class="titulo-pildora">HORARIO</div>
+        <!-- Elementos decorativos vectoriales flotantes -->
+        <div class="vector-flor-arriba">🌸 ✨ 🤍 ✨ 🌸</div>
+
+        <div class="titulo-planner">
+          <h2>Mi Semana</h2>
+          <div class="estrellas-sub">🌸 ⋆ ˚ ⋆ ˚ 🌸</div>
         </div>
-        
-        <div class="tabla-contenedor">
-          <table class="tabla-horario">
-            <thead id="horario-thead">
-              <!-- Renderizado por JS dinámicamente -->
-            </thead>
-            <tbody id="horario-tbody">
-              <!-- Renderizado por JS dinámicamente -->
-            </tbody>
-          </table>
+
+        <!-- Grid de Tarjetas por Día (Estilo exacto de tu referencia) -->
+        <div id="planner-grid" class="planner-grid">
+          <!-- Renderizado dinámico por JS -->
         </div>
       </div>
     </main>
 
-    <button id="btn-generar-imagen" class="btn-flotante" type="button">📸 Descargar Imagen</button>
+    <button id="btn-generar-imagen" class="btn-flotante" type="button">📸 Descargar Imagen HD</button>
   </div>
 
-  <!-- Modal para Configurar la Tabla -->
+  <!-- Modal Configuración de Días -->
   <div id="modal-config" class="modal-overlay oculto">
     <div class="modal">
-      <h3>Estructura de la Tabla</h3>
-      <p class="subtitulo">Separa los elementos usando comas (,)</p>
-      
+      <h3>Personalizar Columnas</h3>
+      <p class="subtitulo">Escribe los días o secciones separados por comas</p>
       <div class="modal-campo">
-        <label for="input-cols">Columnas (Días o Categorías)</label>
-        <textarea id="input-cols" rows="2" placeholder="Lunes, Martes, Miércoles..."></textarea>
+        <textarea id="input-cols" rows="3" placeholder="Lunes, Martes, Miércoles..."></textarea>
       </div>
-      
-      <div class="modal-campo">
-        <label for="input-rows">Filas (Horarios o Tramos)</label>
-        <textarea id="input-rows" rows="3" placeholder="08:00, 09:00, 10:00..."></textarea>
-      </div>
-      
       <div class="modal-botones">
         <button type="button" id="btn-cancelar-config" class="btn-secundario">Cancelar</button>
-        <button type="button" id="btn-guardar-config" class="btn-principal">Aplicar Cambios</button>
+        <button type="button" id="btn-guardar-config" class="btn-principal">Guardar</button>
       </div>
     </div>
   </div>
 
-  <!-- Modal para agregar tareas -->
+  <!-- Modal para Agregar Actividad -->
   <div id="modal-agregar" class="modal-overlay oculto">
     <div class="modal">
-      <h3 id="modal-titulo">Agregar Actividad</h3>
+      <h3 id="modal-titulo">Nueva Actividad</h3>
+      <div class="modal-campo">
+        <label for="input-hora">Horario (Opcional)</label>
+        <input type="text" id="input-hora" placeholder="Ej: 10:00 - 11:00" autocomplete="off">
+      </div>
       <div class="modal-campo">
         <label for="input-nota">Descripción</label>
-        <input type="text" id="input-nota" placeholder="Ej: Reunión, Estudiar, Gym..." maxlength="40" autocomplete="off">
+        <input type="text" id="input-nota" placeholder="Ej: Clases, Trabajo, Gym..." maxlength="40" autocomplete="off">
       </div>
       <div class="modal-campo">
         <label>Elige un ícono</label>
@@ -118,19 +107,19 @@
       </div>
       <div class="modal-botones">
         <button type="button" id="btn-cancelar-modal" class="btn-secundario">Cancelar</button>
-        <button type="button" id="btn-guardar-entrada" class="btn-principal">Guardar</button>
+        <button type="button" id="btn-guardar-entrada" class="btn-principal">Añadir</button>
       </div>
     </div>
   </div>
 
-  <!-- Modal para ver/descargar la imagen generada -->
+  <!-- Modal para ver/descargar la imagen -->
   <div id="modal-imagen" class="modal-overlay oculto">
     <div class="modal modal-imagen-contenido">
-      <h3>¡Listo para compartir! 🎉</h3>
-      <img id="imagen-generada" alt="Imagen generada">
+      <h3>¡Tu Planner está listo! ✨</h3>
+      <img id="imagen-generada" alt="Planner generado">
       <div class="modal-botones">
         <button type="button" id="btn-cerrar-imagen" class="btn-secundario">Volver</button>
-        <a id="btn-descargar" class="btn-principal" download="horario-elegante.png">Descargar PNG</a>
+        <a id="btn-descargar" class="btn-principal" download="mi-semana-estetica.png">Descargar PNG</a>
       </div>
     </div>
   </div>

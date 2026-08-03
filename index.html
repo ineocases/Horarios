@@ -88,28 +88,19 @@
     </main>
   </div>
 
-  <!-- Modal Configuración de Filas y Columnas -->
-  <div id="modal-config" class="modal-overlay oculto">
-    <div class="modal">
-      <h3>Estructura de la Planilla</h3>
-      <p class="subtitulo">Separa los elementos usando comas (,)</p>
-      
-      <div class="modal-campo">
-        <label for="input-cols">Columnas (Días o Categorías)</label>
-        <textarea id="input-cols" rows="2" placeholder="Lunes, Martes, Miércoles..."></textarea>
-      </div>
-      
-      <div class="modal-campo">
-        <label for="input-rows">Filas (Horarios o Secciones)</label>
-        <textarea id="input-rows" rows="3" placeholder="08:00, 09:00, 10:00..."></textarea>
-      </div>
-      
+<!-- Modal para ver/descargar la imagen -->
+  <div id="modal-imagen" class="modal-overlay oculto">
+    <div class="modal modal-imagen-contenido">
+      <h3>¡Tu Planilla está lista! ✨</h3>
+      <img id="imagen-generada" alt="Planilla generada">
       <div class="modal-botones">
-        <button type="button" id="btn-cancelar-config" class="btn-secundario">Cancelar</button>
-        <button type="button" id="btn-guardar-config" class="btn-principal">Guardar Cambios</button>
+        <button type="button" id="btn-cerrar-imagen" class="btn-secundario">Volver</button>
+        <a id="btn-descargar" class="btn-principal" download="mi-planilla-estetica.png">Descargar PNG</a>
       </div>
     </div>
- <!-- Modal Tutorial Widget Scriptable -->
+  </div>
+
+  <!-- Modal Tutorial Widget Scriptable -->
   <div id="modal-widget" class="modal-overlay oculto">
     <div class="modal modal-tutorial" style="position: relative; text-align: center; padding: 25px 20px;">
       <!-- Botón de Cerrar -->

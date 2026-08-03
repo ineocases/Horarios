@@ -22,7 +22,7 @@
   <div id="pantalla-login" class="oculto">
     <div class="login-card">
       <h1>Mi Semana 🌸</h1>
-      <p class="subtitulo">Organiza tus días con estilo</p>
+      <p class="subtitulo">Organiza tu semana</p>
       <div class="login-tabs">
         <button type="button" id="tab-login" class="tab activo">Iniciar sesión</button>
         <button type="button" id="tab-registro" class="tab">Crear cuenta</button>
@@ -39,7 +39,7 @@
   <!-- Aplicación Principal -->
   <div id="pantalla-app" class="oculto">
     <nav class="navbar">
-      <span class="logo">🌸 </span>
+      <span class="logo">🌸 Semana Estética</span>
       <div class="nav-derecha">
         <span id="banner-error" class="badge-error oculto">Modo Local</span>
         <span id="usuario-email"></span>
@@ -51,38 +51,59 @@
 
     <main>
       <div class="controles-superiores solo-editar">
-        <button id="btn-abrir-config" class="btn-secundario" type="button">⚙️ Cambiar Días / Categorías</button>
+        <button id="btn-abrir-config" class="btn-secundario" type="button">⚙️ Configurar Filas y Columnas</button>
       </div>
 
-      <!-- Contenedor Estilo Planner -->
+      <!-- Contenedor Planilla Estilo Canva (Capturable) -->
       <div id="capture-area">
-        <div class="vector-flor-arriba">🌸 🤍 🌸</div>
+        <div class="vector-flor-arriba">🌸  🤍  🌸</div>
+        
         <div class="titulo-planner">
-          <h2>Mi Semana</h2>
+          <h2>Mi Planilla Semanal</h2>
           <div class="estrellas-sub">🌸 ⋆ ˚ ⋆ ˚ 🌸</div>
         </div>
 
-        <!-- Grid de Tarjetas por Día -->
-        <div id="planner-grid" class="planner-grid">
-          <!-- Renderizado dinámico por JS -->
+        <!-- Tabla Estilo Planilla Canva -->
+        <div class="tabla-contenedor">
+          <table class="tabla-horario">
+            <thead id="horario-thead">
+              <!-- Renderizado dinámico -->
+            </thead>
+            <tbody id="horario-tbody">
+              <!-- Renderizado dinámico -->
+            </tbody>
+          </table>
         </div>
+
+        <div class="vector-flor-abajo">✨ 🤍 ✨</div>
+      </div>
+
+      <!-- Botón de descarga ubicado fuera de la planilla para que no se superponga -->
+      <div class="contenedor-btn-descarga solo-editar">
+        <button id="btn-generar-imagen" class="btn-flotante" type="button">📸 Descargar Imagen HD</button>
       </div>
     </main>
-
-    <button id="btn-generar-imagen" class="btn-flotante" type="button">📸 Descargar Imagen HD</button>
   </div>
 
-  <!-- Modal Configuración de Días -->
+  <!-- Modal Configuración de Filas y Columnas -->
   <div id="modal-config" class="modal-overlay oculto">
     <div class="modal">
-      <h3>Personalizar Columnas</h3>
-      <p class="subtitulo">Escribe los días o secciones separados por comas</p>
+      <h3>Estructura de la Planilla</h3>
+      <p class="subtitulo">Separa los elementos usando comas (,)</p>
+      
       <div class="modal-campo">
-        <textarea id="input-cols" rows="3" placeholder="Lunes, Martes, Miércoles..."></textarea>
+        <label for="input-cols">Columnas (Días o Categorías)</label>
+        <textarea id="input-cols" rows="2" placeholder="Lunes, Martes, Miércoles..."></textarea>
       </div>
+      
+      <div class="modal-campo">
+        <label for="input-rows">Filas (Horarios o Secciones)</label>
+        <textarea id="input-rows" rows="3" placeholder="08:00, 09:00, 10:00..."></textarea>
+      </div>
+      
       <div class="modal-botones">
         <button type="button" id="btn-cancelar-config" class="btn-secundario">Cancelar</button>
-        <button type="button" id="btn-guardar-config" class="btn-principal">Guardar</button>
+        <button type="button" id="btn-guardar-config" class="btn-principal">Guardar Cambios</button>
       </div>
     </div>
   </div>
@@ -92,12 +113,8 @@
     <div class="modal">
       <h3 id="modal-titulo">Nueva Actividad</h3>
       <div class="modal-campo">
-        <label for="input-hora">Horario (Opcional)</label>
-        <input type="text" id="input-hora" placeholder="Ej: 10:00 - 11:00" autocomplete="off">
-      </div>
-      <div class="modal-campo">
         <label for="input-nota">Descripción</label>
-        <input type="text" id="input-nota" placeholder="Ej: Clases, Trabajo, Gym..." maxlength="40" autocomplete="off">
+        <input type="text" id="input-nota" placeholder="Ej: Clases, Reunión, Gym..." maxlength="40" autocomplete="off">
       </div>
       <div class="modal-campo">
         <label>Elige un ícono</label>
@@ -113,11 +130,11 @@
   <!-- Modal para ver/descargar la imagen -->
   <div id="modal-imagen" class="modal-overlay oculto">
     <div class="modal modal-imagen-contenido">
-      <h3>¡Tu Planner está listo! ✨</h3>
-      <img id="imagen-generada" alt="Planner generado">
+      <h3>¡Tu Planilla está lista! ✨</h3>
+      <img id="imagen-generada" alt="Planilla generada">
       <div class="modal-botones">
         <button type="button" id="btn-cerrar-imagen" class="btn-secundario">Volver</button>
-        <a id="btn-descargar" class="btn-principal" download="mi-semana-estetica.png">Descargar PNG</a>
+        <a id="btn-descargar" class="btn-principal" download="mi-planilla-estetica.png">Descargar PNG</a>
       </div>
     </div>
   </div>

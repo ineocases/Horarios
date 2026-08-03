@@ -647,6 +647,7 @@ $("#btn-copiar-url")?.addEventListener("click", async (e) => {
       btn.style.background = "";
       btn.style.color = "";
     }, 2500);
-  } catch (err) {
+  } catch (error) {
     alert("Tu navegador bloqueó la copia automática.");
-}
+  }
+});

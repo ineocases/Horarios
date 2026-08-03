@@ -553,3 +553,50 @@ function mostrarPantalla(id) {
   const target = $(id);
   if (target) target.classList.remove('oculto');
 }
+// ==========================
+// INSTALAR WIDGET
+// ==========================
+
+$("#btn-instalar-widget")?.addEventListener("click", instalarWidget);
+
+async function instalarWidget(){
+
+    if(!usuarioActual){
+        alert("Debes iniciar sesión.");
+        return;
+    }
+
+    try{
+
+        const widgetRef = doc(db,"widgets",usuarioActual.uid);
+
+        const existente = await getDoc(widgetRef);
+
+        let token;
+
+        if(existente.exists()){
+
+            token = existente.data().token;
+
+        }else{
+
+            token = crypto.randomUUID();
+
+            await setDoc(widgetRef,{
+                token,
+                activo:true,
+                creado:serverTimestamp()
+            });
+
+        }
+
+        alert("Token generado:\n\n"+token);
+
+    }catch(e){
+
+        console.error(e);
+        alert("Error al crear el widget.");
+
+    }
+
+}

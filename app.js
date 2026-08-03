@@ -460,17 +460,6 @@ function mostrarPantalla(id) {
 $("#btn-instalar-widget")?.addEventListener("click", () => instalarWidget('v1'));
 $("#btn-instalar-widget-2")?.addEventListener("click", () => instalarWidget('v2'));
 
-async function obtenerTokenWidget() {
-  if (!usuarioActual) { alert("Debes iniciar sesión para generar tu widget."); return null; }
-  const q = query(collection(db, "widgets"), where("uid", "==", usuarioActual.uid));
-  const querySnapshot = await getDocs(q);
-  if (!querySnapshot.empty) return querySnapshot.docs[0].id;
-
-  const token = Date.now().toString(36) + Math.random().toString(36).substring(2);
-  await setDoc(doc(db, "widgets", token), { uid: usuarioActual.uid, activo: true, creado: serverTimestamp() });
-  return token;
-}
-
 async function instalarWidget(tipo) {
   const token = await obtenerTokenWidget();
   if (!token) return;
@@ -480,68 +469,55 @@ async function instalarWidget(tipo) {
   let codigoScriptable = "";
 
   if (tipo === 'v1') {
-    // Script Compacto (Lista vertical)
+    // Widget 1: Compacto (Pequeño)
     codigoScriptable = `const url = "${urlNetlify}";
 const req = new Request(url);
 const res = await req.loadString();
+
 let widget = new ListWidget();
 widget.backgroundColor = new Color("#FFF0F3");
 widget.url = "https://ineocases.github.io/Horarios/";
+
 let header = widget.addText("✨ Tu Horario");
 header.font = Font.boldSystemFont(14);
 header.textColor = new Color("#D6336C");
 widget.addSpacer(8);
+
 let contenido = widget.addText(res);
 contenido.font = Font.systemFont(12);
 contenido.textColor = new Color("#5C4A47");
+
 if (config.runsInWidget) { Script.setWidget(widget); } else { widget.presentSmall(); }
 Script.complete();`;
   } else {
-    // Script 2: Ancho Estilo Canva Semanal (Formato horizontal con horarios agrupados)
-    codigoScriptable = `const url = "${urlNetlify}&formato=completo";
+    // Widget 2: Ancho Estilo Canva (Mediano / Grande)
+    codigoScriptable = `const url = "${urlNetlify}";
 const req = new Request(url);
-const datos = await req.loadJSON();
+const res = await req.loadString();
 
 let widget = new ListWidget();
 widget.backgroundColor = new Color("#FFF2F4");
-widget.setPadding(12, 12, 12, 12);
+widget.setPadding(12, 16, 12, 16);
 
 let header = widget.addText("🌸 MI SEMANA CANVA");
 header.font = Font.boldSystemFont(13);
 header.textColor = new Color("#D6336C");
-header.centerAlign();
 widget.addSpacer(8);
 
-let stackGrid = widget.addStack();
-stackGrid.layoutHorizontally();
+let lineas = res.split("\\n").filter(l => l.trim() !== "");
 
-const dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
-
-dias.forEach((dia, idx) => {
-  let col = stackGrid.addStack();
-  col.layoutVertically();
-  
-  let txtDia = col.addText(dia.substring(0,3).toUpperCase());
-  txtDia.font = Font.boldSystemFont(10);
-  txtDia.textColor = new Color("#E87A90");
-  col.addSpacer(4);
-  
-  let tareasDia = datos[dia] || [];
-  if (tareasDia.length === 0) {
-    let libre = col.addText("☕ Libre");
-    libre.font = Font.systemFont(9);
-    libre.textColor = new Color("#999999");
-  } else {
-    tareasDia.forEach(t => {
-      let item = col.addText(\`\${t.icono || '📌'} \${t.nota}\\n⏱ \${t.rango}\`);
-      item.font = Font.systemFont(9);
-      item.textColor = new Color("#333333");
-      col.addSpacer(3);
-    });
-  }
-  
-  if (idx < dias.length - 1) { stackGrid.addSpacer(6); }
-});
+if (lineas.length === 0) {
+  let txt = widget.addText("Sin actividades programadas ✨");
+  txt.font = Font.systemFont(11);
+  txt.textColor = new Color("#888888");
+} else {
+  lineas.forEach(linea => {
+    let item = widget.addText(linea);
+    item.font = Font.systemFont(11);
+    item.textColor = new Color("#333333");
+    widget.addSpacer(3);
+  });
+}
 
 if (config.runsInWidget) { Script.setWidget(widget); } else { widget.presentMedium(); }
 Script.complete();`;
@@ -554,9 +530,7 @@ Script.complete();`;
   }
   
   $("#modal-widget")?.classList.remove("oculto");
-}
-
-$("#btn-cerrar-widget")?.addEventListener("click", () => $("#modal-widget")?.classList.add("oculto"));
+}$("#btn-cerrar-widget")?.addEventListener("click", () => $("#modal-widget")?.classList.add("oculto"));
 
 $("#btn-copiar-url")?.addEventListener("click", async (e) => {
   const btn = e.target;

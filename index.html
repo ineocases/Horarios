@@ -1,237 +1,129 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi Semana Estética ✨</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌸</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBLzPOb6AbR3-2NqLkG0ETVWXeWY7tY7iI",
-  authDomain: "horarios-3f609.firebaseapp.com",
-  projectId: "horarios-3f609",
-  storageBucket: "horarios-3f609.firebasestorage.app",
-  messagingSenderId: "1002586000808",
-  appId: "1:1002586000808:web:27004906e10133064c219d",
-  measurementId: "G-0VGK0HWR4B"
-};
+  <!-- Pantalla de carga -->
+  <div id="pantalla-carga">
+    <div class="spinner"></div>
+  </div>
 
-// Columnas (Días estilo la foto de referencia)
-let columnas = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-let tareas = []; // { id, col, hora, nota, icono }
-
-const ICONOS = ['🌸', '💼', '📚', '☕', '🏋️', '✨', '💻', '🛒', '❤️', '📌'];
-let colSeleccionada = null;
-let iconoSeleccionado = ICONOS[0];
-
-let auth, db, usuarioActual = null, modoFormulario = 'login';
-const $ = (sel) => document.querySelector(sel);
-
-// Inicializar Firebase
-try {
-  const app = initializeApp(firebaseConfig);
-  auth = getAuth(app);
-  db = getFirestore(app);
-
-  onAuthStateChanged(auth, async (user) => {
-    if (user) {
-      usuarioActual = user;
-      $('#usuario-email').textContent = user.email;
-      $('#btn-logout').classList.remove('oculto');
-      mostrarPantalla('#pantalla-app');
-      await cargarBaseDeDatos(user.uid);
-    } else {
-      usuarioActual = null;
-      mostrarPantalla('#pantalla-login');
-    }
-  });
-} catch (error) {
-  console.warn("Modo local activado:", error);
-  $('#banner-error').classList.remove('oculto');
-  mostrarPantalla('#pantalla-app'); 
-  renderizarPlanner();
-}
-
-// Autenticación
-$('#tab-login').addEventListener('click', () => cambiarTab('login'));
-$('#tab-registro').addEventListener('click', () => cambiarTab('registro'));
-
-function cambiarTab(modo) {
-  modoFormulario = modo;
-  $('#tab-login').classList.toggle('activo', modo === 'login');
-  $('#tab-registro').classList.toggle('activo', modo === 'registro');
-  $('#btn-login-submit').textContent = modo === 'login' ? 'Ingresar' : 'Crear cuenta';
-  $('#login-error').classList.add('oculto');
-}
-
-$('#form-login').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const email = $('#login-email').value.trim();
-  const password = $('#login-password').value;
-  $('#login-error').classList.add('oculto');
-  $('#btn-login-submit').disabled = true;
-  
-  try {
-    if (modoFormulario === 'login') {
-      await signInWithEmailAndPassword(auth, email, password);
-    } else {
-      await createUserWithEmailAndPassword(auth, email, password);
-    }
-  } catch (err) {
-    const mensajes = { 'auth/invalid-credential': 'Datos incorrectos.', 'auth/email-already-in-use': 'El correo ya existe.', 'auth/weak-password': 'Mínimo 6 caracteres.' };
-    $('#login-error').textContent = mensajes[err.code] || 'Error de conexión.';
-    $('#login-error').classList.remove('oculto');
-  } finally {
-    $('#btn-login-submit').disabled = false;
-  }
-});
-$('#btn-logout').addEventListener('click', () => signOut(auth));
-
-// Configurar Días / Columnas
-$('#btn-abrir-config').addEventListener('click', () => {
-  $('#input-cols').value = columnas.join(', ');
-  $('#modal-config').classList.remove('oculto');
-});
-$('#btn-cancelar-config').addEventListener('click', () => $('#modal-config').classList.add('oculto'));
-
-$('#btn-guardar-config').addEventListener('click', () => {
-  const nuevas = $('#input-cols').value.split(',').map(s => s.trim()).filter(Boolean);
-  if (nuevas.length === 0) {
-    alert("Agrega al menos un día.");
-    return;
-  }
-  columnas = nuevas;
-  tareas = tareas.filter(t => columnas.includes(t.col));
-  $('#modal-config').classList.add('oculto');
-  renderizarPlanner();
-  guardarBaseDeDatos();
-});
-
-// Renderizar el Planner Estético por Tarjetas
-function renderizarPlanner() {
-  const grid = $('#planner-grid');
-  grid.innerHTML = columnas.map(col => {
-    const tareasCol = tareas.filter(t => t.col === col);
-    
-    const contenidoTareas = tareasCol.length > 0 ? tareasCol.map(t => `
-      <div class="bloque-tarea">
-        <div class="tarea-info-izq">
-          <span class="tarea-icono-box">${t.icono}</span>
-          <div class="tarea-detalles">
-            ${t.hora ? `<span class="tarea-hora">${t.hora}</span>` : ''}
-            <span class="tarea-texto">${t.nota}</span>
-          </div>
-        </div>
-        <button class="btn-eliminar-tarea solo-editar" data-id="${t.id}">✕</button>
+  <!-- Pantalla de Login / Registro -->
+  <div id="pantalla-login" class="oculto">
+    <div class="login-card">
+      <h1>Mi Semana 🌸</h1>
+      <p class="subtitulo">Organiza tus días con estilo</p>
+      <div class="login-tabs">
+        <button type="button" id="tab-login" class="tab activo">Iniciar sesión</button>
+        <button type="button" id="tab-registro" class="tab">Crear cuenta</button>
       </div>
-    `).join('') : `<div class="sin-planes">Sin planes todavía 🌸</div>`;
+      <form id="form-login">
+        <input type="email" id="login-email" placeholder="Correo electrónico" required>
+        <input type="password" id="login-password" placeholder="Contraseña (mín 6 carácteres)" required minlength="6">
+        <p id="login-error" class="error oculto"></p>
+        <button type="submit" id="btn-login-submit" class="btn-principal">Ingresar</button>
+      </form>
+    </div>
+  </div>
 
-    return `
-      <div class="dia-tarjeta" data-col="${col}">
-        <div class="dia-header">
-          <span>${col}</span>
-          <button class="btn-agregar-en-dia solo-editar" data-col="${col}" title="Añadir">+</button>
+  <!-- Aplicación Principal -->
+  <div id="pantalla-app" class="oculto">
+    <nav class="navbar">
+      <span class="logo">🌸 Planner Estético</span>
+      <div class="nav-derecha">
+        <span id="banner-error" class="badge-error oculto">Modo Local</span>
+        <span id="usuario-email"></span>
+        <button id="btn-logout" class="btn-secundario oculto" type="button">Salir</button>
+      </div>
+    </nav>
+
+    <div id="mensaje-guardado" class="toast oculto">Sincronizado 💖</div>
+
+    <main>
+      <div class="controles-superiores solo-editar">
+        <button id="btn-abrir-config" class="btn-secundario">⚙️ Cambiar Días / Categorías</button>
+      </div>
+
+      <!-- Contenedor Estilo Planner (Capturable) -->
+      <div id="capture-area">
+        <!-- Elementos decorativos vectoriales flotantes -->
+        <div class="vector-flor-arriba">🌸 ✨ 🤍 ✨ 🌸</div>
+
+        <div class="titulo-planner">
+          <h2>Mi Semana</h2>
+          <div class="estrellas-sub">🌸 ⋆ ˚ ⋆ ˚ 🌸</div>
         </div>
-        <div class="dia-cuerpo">
-          ${contenidoTareas}
+
+        <!-- Grid de Tarjetas por Día (Estilo exacto de tu referencia) -->
+        <div id="planner-grid" class="planner-grid">
+          <!-- Renderizado dinámico por JS -->
         </div>
       </div>
-    `;
-  }).join('');
-}
+    </main>
 
-// Interacciones en el Planner (Agregar / Borrar)
-$('#planner-grid').addEventListener('click', (e) => {
-  const btnBorrar = e.target.closest('.btn-eliminar-tarea');
-  if (btnBorrar) {
-    tareas = tareas.filter(t => t.id !== btnBorrar.dataset.id);
-    renderizarPlanner();
-    guardarBaseDeDatos();
-    return;
-  }
+    <button id="btn-generar-imagen" class="btn-flotante" type="button">📸 Descargar Imagen HD</button>
+  </div>
 
-  const btnMas = e.target.closest('.btn-agregar-en-dia');
-  if (btnMas) {
-    abrirModalTarea(btnMas.dataset.col);
-  }
-});
+  <!-- Modal Configuración de Días -->
+  <div id="modal-config" class="modal-overlay oculto">
+    <div class="modal">
+      <h3>Personalizar Columnas</h3>
+      <p class="subtitulo">Escribe los días o secciones separados por comas</p>
+      <div class="modal-campo">
+        <textarea id="input-cols" rows="3" placeholder="Lunes, Martes, Miércoles..."></textarea>
+      </div>
+      <div class="modal-botones">
+        <button type="button" id="btn-cancelar-config" class="btn-secundario">Cancelar</button>
+        <button type="button" id="btn-guardar-config" class="btn-principal">Guardar</button>
+      </div>
+    </div>
+  </div>
 
-// Modal de Tareas
-function construirIconos() {
-  $('#selector-iconos').innerHTML = ICONOS.map(ic => `<div class="icono-opcion ${ic === iconoSeleccionado ? 'seleccionado' : ''}" data-icono="${ic}">${ic}</div>`).join('');
-}
+  <!-- Modal para Agregar Actividad -->
+  <div id="modal-agregar" class="modal-overlay oculto">
+    <div class="modal">
+      <h3 id="modal-titulo">Nueva Actividad</h3>
+      <div class="modal-campo">
+        <label for="input-hora">Horario (Opcional)</label>
+        <input type="text" id="input-hora" placeholder="Ej: 10:00 - 11:00" autocomplete="off">
+      </div>
+      <div class="modal-campo">
+        <label for="input-nota">Descripción</label>
+        <input type="text" id="input-nota" placeholder="Ej: Clases, Trabajo, Gym..." maxlength="40" autocomplete="off">
+      </div>
+      <div class="modal-campo">
+        <label>Elige un ícono</label>
+        <div id="selector-iconos" class="iconos-grid"></div>
+      </div>
+      <div class="modal-botones">
+        <button type="button" id="btn-cancelar-modal" class="btn-secundario">Cancelar</button>
+        <button type="button" id="btn-guardar-entrada" class="btn-principal">Añadir</button>
+      </div>
+    </div>
+  </div>
 
-$('#selector-iconos').addEventListener('click', (e) => {
-  if (e.target.dataset.icono) {
-    iconoSeleccionado = e.target.dataset.icono;
-    construirIconos();
-  }
-});
+  <!-- Modal para ver/descargar la imagen -->
+  <div id="modal-imagen" class="modal-overlay oculto">
+    <div class="modal modal-imagen-contenido">
+      <h3>¡Tu Planner está listo! ✨</h3>
+      <img id="imagen-generada" alt="Planner generado">
+      <div class="modal-botones">
+        <button type="button" id="btn-cerrar-imagen" class="btn-secundario">Volver</button>
+        <a id="btn-descargar" class="btn-principal" download="mi-semana-estetica.png">Descargar PNG</a>
+      </div>
+    </div>
+  </div>
 
-function abrirModalTarea(col) {
-  colSeleccionada = col;
-  $('#modal-titulo').textContent = `Nuevo en ${col}`;
-  $('#input-hora').value = '';
-  $('#input-nota').value = '';
-  iconoSeleccionado = ICONOS[0];
-  construirIconos();
-  $('#modal-agregar').classList.remove('oculto');
-  setTimeout(() => $('#input-nota').focus(), 100);
-}
-
-$('#btn-cancelar-modal').addEventListener('click', () => $('#modal-agregar').classList.add('oculto'));
-
-$('#btn-guardar-entrada').addEventListener('click', () => {
-  const nota = $('#input-nota').value.trim();
-  const hora = $('#input-hora').value.trim();
-  if (nota) {
-    tareas.push({ id: Date.now().toString(), col: colSeleccionada, hora, nota, icono: iconoSeleccionado });
-    renderizarPlanner();
-    guardarBaseDeDatos();
-    $('#modal-agregar').classList.add('oculto');
-  } else {
-    alert("Escribe una descripción.");
-  }
-});
-
-// Firestore
-async function guardarBaseDeDatos() {
-  if (usuarioActual && db) {
-    try {
-      await setDoc(doc(db, 'planner_estetico', usuarioActual.uid), { columnas, tareas });
-      mostrarNotificacion('Guardado 💖');
-    } catch (err) { console.error(err); }
-  }
-}
-
-async function cargarBaseDeDatos(uid) {
-  try {
-    const snap = await getDoc(doc(db, 'planner_estetico', uid));
-    if (snap.exists()) {
-      const data = snap.data();
-      if (data.columnas) columnas = data.columnas;
-      if (data.tareas) tareas = data.tareas;
-    }
-  } catch (err) { console.error(err); }
-  renderizarPlanner();
-}
-
-function mostrarNotificacion(msg) {
-  const t = $('#mensaje-guardado');
-  t.textContent = msg; t.classList.remove('oculto');
-  setTimeout(() => t.classList.add('oculto'), 2000);
-}
-
-// Descargar Imagen HD
-$('#btn-generar-imagen').addEventListener('click', async () => {
-  document.body.classList.add('exportando');
-  await new Promise(r => setTimeout(r, 150)); 
-  try {
-    const canvas = await html2canvas($('#capture-area'), { backgroundColor: '#FFF2F4', scale: 2 });
-    $('#imagen-generada').src = canvas.toDataURL('image/png');
-    $('#btn-descargar').href = canvas.toDataURL('image/png');
-    $('#modal-imagen').classList.remove('oculto');
-  } finally { document.body.classList.remove('exportando'); }
-});
-$('#btn-cerrar-imagen').addEventListener('click', () => $('#modal-imagen').classList.add('oculto'));
-
-function mostrarPantalla(id) {
-  ['#pantalla-carga', '#pantalla-login', '#pantalla-app'].forEach(s => $(s).classList.add('oculto'));
-  $(id).classList.remove('oculto');
-}
+  <script type="module" src="app.js"></script>
+</body>
+</html>

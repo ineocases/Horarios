@@ -435,25 +435,25 @@ async function instalarWidget(tipo) {
 const req = new Request(url);
 const res = await req.loadString();
 let widget = new ListWidget();
-widget.backgroundColor = Color.dynamic(new Color("#FFF0F3"), new Color("#1E1B1C"));
+widget.backgroundColor = Color.dynamic(new Color("#FFFFFF", 0.9), new Color("#1C1C1E", 0.9));
 let header = widget.addText("✨ Tu Horario");
 header.font = Font.boldSystemFont(14);
-header.textColor = Color.dynamic(new Color("#D6336C"), new Color("#FF80AB"));
+header.textColor = Color.dynamic(new Color("#000000", 0.85), new Color("#FFFFFF", 0.95));
 widget.addSpacer(8);
 let contenido = widget.addText(res);
 contenido.font = Font.systemFont(12);
-contenido.textColor = Color.dynamic(new Color("#5C4A47"), new Color("#E0E0E0"));
+contenido.textColor = Color.dynamic(new Color("#000000", 0.7), new Color("#FFFFFF", 0.8));
 if (config.runsInWidget) { Script.setWidget(widget); } else { widget.presentSmall(); }
 Script.complete();`;
   } else {
-    // Widget 2: PLANTILLA CANVA ADAPTATIVA
+    // Widget 2: ADAPTATIVO A MODO PERSONALIZADO Y SISTEMA TINTED DE APPLE
     codigoScriptable = `const url = "${urlNetlify}";
 const req = new Request(url);
 const res = await req.loadString();
 
 let widget = new ListWidget();
-// Colores dinámicos compatibles con Modo Personalizado / Oscuro de iOS
-widget.backgroundColor = Color.dynamic(new Color("#FFF2F4"), new Color("#1C1A1C"));
+// Fondos dinámicos con opacidad para que el modo Personalizado de iOS/iPadOS no dibuje bloques blancos opacos
+widget.backgroundColor = Color.dynamic(new Color("#FFFFFF", 0.85), new Color("#1C1C1E", 0.85));
 widget.setPadding(10, 8, 10, 8);
 
 // Título principal
@@ -461,7 +461,7 @@ let titleStack = widget.addStack();
 titleStack.addSpacer();
 let title = titleStack.addText("🌸 Mi Planilla Semanal 🌸");
 title.font = Font.boldSystemFont(13);
-title.textColor = Color.dynamic(new Color("#D6336C"), new Color("#FF80AB"));
+title.textColor = Color.dynamic(new Color("#000000", 0.85), new Color("#FFFFFF", 0.95));
 titleStack.addSpacer();
 widget.addSpacer(8);
 
@@ -479,13 +479,6 @@ let diasMapa = {
   "jueves": "Jueves", "viernes": "Viernes", "sábado": "Sábado", "sabado": "Sábado"
 };
 
-let diasNombres = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-let hoyObj = new Date();
-let hoyNombre = diasNombres[hoyObj.getDay()];
-let mananaObj = new Date();
-mananaObj.setDate(hoyObj.getDate() + 1);
-let mananaNombre = diasNombres[mananaObj.getDay()];
-
 let lines = res.split("\\n");
 let currentDay = "Lunes";
 
@@ -494,16 +487,6 @@ for (let line of lines) {
   if (!l) continue;
   let lLower = l.toLowerCase();
 
-  // Ignorar etiquetas "Hoy" / "Mañana" como texto directo
-  if (lLower === "hoy:" || lLower === "hoy") {
-    currentDay = hoyNombre;
-    continue;
-  }
-  if (lLower === "mañana:" || lLower === "mañana" || lLower === "manana:" || lLower === "manana") {
-    currentDay = mananaNombre;
-    continue;
-  }
-
   let matchedDayKey = Object.keys(diasMapa).find(k => lLower.startsWith(k) || lLower.includes(k));
   if (matchedDayKey) {
     currentDay = diasMapa[matchedDayKey];
@@ -511,11 +494,19 @@ for (let line of lines) {
     if (lClean === matchedDayKey) continue;
   }
 
-  if (lLower.includes("tu horario") || lLower.includes("mi semana") || lLower.startsWith("---")) continue;
+  if (lLower.includes("tu horario") || lLower.includes("mi semana") || lLower.startsWith("---") || lLower.startsWith("hoy") || lLower.startsWith("mañana")) continue;
 
   if (schedule[currentDay]) {
     schedule[currentDay].push(l);
   }
+}
+
+function sumarUnaHora(horaStr) {
+  if (!horaStr) return "";
+  let p = horaStr.split(":");
+  if (p.length < 2) return horaStr;
+  let h = parseInt(p[0], 10) + 1;
+  return (h < 10 ? "0" + h : h) + ":" + p[1];
 }
 
 function agrupar(tareas) {
@@ -539,7 +530,15 @@ function agrupar(tareas) {
     }
   }
   grouped.push(cur);
-  return grouped;
+
+  return grouped.map(g => {
+    let rangoHora = "";
+    if (g.s) {
+      let horaFin = sumarUnaHora(g.e);
+      rangoHora = g.s + " a " + horaFin;
+    }
+    return { rango: rangoHora, nombre: g.n };
+  });
 }
 
 for (let d of dias) {
@@ -547,13 +546,13 @@ for (let d of dias) {
   col.layoutVertically();
   
   let headerStack = col.addStack();
-  headerStack.backgroundColor = Color.dynamic(new Color("#FCE4EC"), new Color("#3A2229"));
+  headerStack.backgroundColor = Color.dynamic(new Color("#000000", 0.08), new Color("#FFFFFF", 0.15));
   headerStack.setPadding(3, 1, 3, 1);
   headerStack.cornerRadius = 5;
   headerStack.addSpacer();
   let headerText = headerStack.addText(d.substring(0,3).toUpperCase());
   headerText.font = Font.boldSystemFont(9);
-  headerText.textColor = Color.dynamic(new Color("#D81B60"), new Color("#FF80AB"));
+  headerText.textColor = Color.dynamic(new Color("#000000", 0.85), new Color("#FFFFFF", 0.95));
   headerStack.addSpacer();
   col.addSpacer(4);
   
@@ -564,32 +563,31 @@ for (let d of dias) {
     emptyStack.addSpacer();
     let empty = emptyStack.addText("-");
     empty.font = Font.systemFont(9);
-    empty.textColor = Color.dynamic(new Color("#CCCCCC"), new Color("#555555"));
+    empty.textColor = Color.dynamic(new Color("#000000", 0.3), new Color("#FFFFFF", 0.3));
     emptyStack.addSpacer();
   } else {
     for (let task of tareasAgrupadas) {
-      if (!task.n) continue;
+      if (!task.nombre) continue;
       
       let tStack = col.addStack();
       tStack.layoutVertically();
-      tStack.backgroundColor = Color.dynamic(new Color("#FFFFFF"), new Color("#2C2C2E"));
-      tStack.setPadding(3, 3, 3, 3);
-      tStack.cornerRadius = 5;
-      tStack.borderColor = Color.dynamic(new Color("#FCE4EC"), new Color("#4A3238"));
+      tStack.backgroundColor = Color.dynamic(new Color("#000000", 0.05), new Color("#FFFFFF", 0.1));
+      tStack.setPadding(4, 3, 4, 3);
+      tStack.cornerRadius = 6;
+      tStack.borderColor = Color.dynamic(new Color("#000000", 0.12), new Color("#FFFFFF", 0.2));
       tStack.borderWidth = 1;
       
-      let tName = tStack.addText(task.n);
-      tName.font = Font.systemFont(8);
-      tName.textColor = Color.dynamic(new Color("#222222"), new Color("#EEEEEE"));
+      let tName = tStack.addText(task.nombre);
+      tName.font = Font.boldSystemFont(8);
+      tName.textColor = Color.dynamic(new Color("#000000", 0.9), new Color("#FFFFFF", 0.95));
       tName.lineLimit = 2;
       tName.minimumScaleFactor = 0.7;
       
-      if (task.s) {
-        tStack.addSpacer(1);
-        let timeStr = (task.s !== task.e) ? (task.s + " a " + task.e) : task.s;
-        let tTime = tStack.addText(timeStr);
-        tTime.font = Font.boldSystemFont(7);
-        tTime.textColor = Color.dynamic(new Color("#D81B60"), new Color("#FF80AB"));
+      if (task.rango) {
+        tStack.addSpacer(2);
+        let tTime = tStack.addText(task.rango);
+        tTime.font = Font.systemFont(7);
+        tTime.textColor = Color.dynamic(new Color("#000000", 0.7), new Color("#FFFFFF", 0.8));
       }
       col.addSpacer(3);
     }

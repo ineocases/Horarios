@@ -559,44 +559,31 @@ function mostrarPantalla(id) {
 
 $("#btn-instalar-widget")?.addEventListener("click", instalarWidget);
 
-async function instalarWidget(){
+async function instalarWidget() {
+  if (!usuarioActual) {
+    alert("Debes iniciar sesión.");
+    return;
+  }
 
-    if(!usuarioActual){
-        alert("Debes iniciar sesión.");
-        return;
-    }
+  try {
+    // 1. PRIMERO creamos el token (la llave)
+    const token = crypto.randomUUID();
+    
+    // 2. DESPUÉS le decimos a Firebase que use ese token como ID del documento
+    const widgetRef = doc(db, "widgets", token);
+    
+    // 3. Guardamos los datos
+    await setDoc(widgetRef, {
+      uid: usuarioActual.uid,
+      activo: true,
+      creado: serverTimestamp()
+    });
+    
+    // 4. Si todo sale bien, abrimos la página del widget
+    window.open(`widget.html?token=${token}`, '_blank');
 
-    try{
-
-        const widgetRef = doc(db, "widgets", token);
-
-        const existente = await getDoc(widgetRef);
-
-        let token;
-
-        if(existente.exists()){
-
-            token = existente.data().token;
-
-        }else{
-
-            token = crypto.randomUUID();
-
-            await setDoc(widgetRef,{
-                uid: usuarioActual.uid,
-                activo: true,
-                creado: serverTimestamp()
-});
-
-        }
-
-        alert("Token generado:\n\n"+token);
-
-    }catch(e){
-
-        console.error(e);
-        alert("Error al crear el widget.");
-
-    }
-
+  } catch (e) {
+    console.error("Error detallado:", e);
+    alert("Error al crear el widget. Revisá la consola.");
+  }
 }

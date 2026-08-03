@@ -557,20 +557,6 @@ function mostrarPantalla(id) {
 // INSTALAR WIDGET Y TUTORIAL
 // ==========================
 
-// 1. Función segura para crear un token (funciona en cualquier dispositivo)
-function generarToken() {
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-    return crypto.randomUUID();
-  }
-  return Date.now().toString(36) + Math.random().toString(36).substring(2);
-}
-
-// 2. Evento del botón principal
-const btnInstalar = document.querySelector("#btn-instalar-widget");
-if (btnInstalar) {
-  btnInstalar.addEventListener("click", instalarWidget);
-}
-
 async function instalarWidget() {
   if (!usuarioActual) {
     alert("Debes iniciar sesión.");
@@ -578,35 +564,45 @@ async function instalarWidget() {
   }
 
   try {
-    const token = generarToken();
+    let token;
+    
+    // 1. Buscamos en Firebase si este usuario YA TIENE un token creado
+    const q = query(collection(db, "widgets"), where("uid", "==", usuarioActual.uid));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+      // OPCIÓN A: Ya existe. Reutilizamos su token único.
+      token = querySnapshot.docs[0].id;
+    } else {
+      // OPCIÓN B: Es su primera vez. Le creamos un token nuevo.
+      token = (typeof crypto !== 'undefined' && crypto.randomUUID) 
+              ? crypto.randomUUID() 
+              : Date.now().toString(36) + Math.random().toString(36).substring(2);
+              
+      const widgetRef = doc(db, "widgets", token);
+      await setDoc(widgetRef, {
+        uid: usuarioActual.uid,
+        activo: true,
+        // Usamos serverTimestamp() de nuevo para que Netlify NO tire "Error de servidor"
+        creado: serverTimestamp() 
+      });
+    }
+    
+    // 2. Armamos la URL con su token único
     const urlNetlify = `https://friendly-melba-0783ef.netlify.app/.netlify/functions/horario?token=${token}`;
     
-    // Mostramos el modal y la URL INMEDIATAMENTE para que no se bloquee
+    // 3. Mostramos la URL en la ventana emergente
     const inputUrl = document.querySelector("#widget-url");
     if (inputUrl) inputUrl.value = urlNetlify;
     
     const modalWidget = document.querySelector("#modal-widget");
-    if (modalWidget) {
-      modalWidget.classList.remove("oculto");
-    } else {
-      alert("Error: No se encontró el HTML del modal. Revisa tu index.html");
-      return;
-    }
-
-    // Ahora guardamos el token en Firebase
-    const widgetRef = doc(db, "widgets", token);
-    await setDoc(widgetRef, {
-      uid: usuarioActual.uid,
-      activo: true,
-      creado: new Date().toISOString() // Usamos fecha estándar para evitar errores de importación
-    });
+    if (modalWidget) modalWidget.classList.remove("oculto");
 
   } catch (e) {
-    console.error("Error al crear widget:", e);
-    alert("Error guardando el token. Revisa la consola o las Reglas de Firestore.");
+    console.error("Error al gestionar el widget:", e);
+    alert("Error al conectar con la base de datos. Revisa la consola.");
   }
 }
-
 // ------------------------------------
 // Eventos del Modal del Widget
 // ------------------------------------

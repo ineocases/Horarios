@@ -12,7 +12,6 @@ const firebaseConfig = {
   measurementId: "G-0VGK0HWR4B"
 };
 
-// Valores por defecto garantizados
 let columnas = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
 let filas = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00'];
 let tareas = [];
@@ -24,33 +23,31 @@ let iconoSeleccionado = ICONOS[0];
 let auth = null, db = null, usuarioActual = null, modoFormulario = 'login';
 const $ = (sel) => document.querySelector(sel);
 
+// MOSTRAR LA APLANILLA DE INMEDIATO (Evita que se quede cargando)
 document.addEventListener('DOMContentLoaded', () => {
+  mostrarPantalla('#pantalla-app');
   renderizarTabla();
+  inicializarFirebaseSeguro();
 });
 
-// Inicializar Firebase
-try {
-  const app = initializeApp(firebaseConfig);
-  auth = getAuth(app);
-  db = getFirestore(app);
+function inicializarFirebaseSeguro() {
+  try {
+    const app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
 
-  onAuthStateChanged(auth, async (user) => {
-    if (user) {
-      usuarioActual = user;
-      if ($('#usuario-email')) $('#usuario-email').textContent = user.email;
-      if ($('#btn-logout')) $('#btn-logout').classList.remove('oculto');
-      mostrarPantalla('#pantalla-app');
-      await cargarBaseDeDatos(user.uid);
-    } else {
-      usuarioActual = null;
-      mostrarPantalla('#pantalla-login');
-    }
-  });
-} catch (error) {
-  console.warn("Modo local activo:", error);
-  if ($('#banner-error')) $('#banner-error').classList.remove('oculto');
-  mostrarPantalla('#pantalla-app'); 
-  renderizarTabla();
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        usuarioActual = user;
+        if ($('#usuario-email')) $('#usuario-email').textContent = user.email;
+        if ($('#btn-logout')) $('#btn-logout').classList.remove('oculto');
+        await cargarBaseDeDatos(user.uid);
+      }
+    });
+  } catch (error) {
+    console.warn("Modo local activo:", error);
+    if ($('#banner-error')) $('#banner-error').classList.remove('oculto');
+  }
 }
 
 // Autenticación
@@ -71,8 +68,6 @@ $('#form-login')?.addEventListener('submit', async (e) => {
   const email = $('#login-email').value.trim();
   const password = $('#login-password').value;
   $('#login-error')?.classList.add('oculto');
-  const btnSub = $('#btn-login-submit');
-  if (btnSub) btnSub.disabled = true;
   
   try {
     if (modoFormulario === 'login') {
@@ -87,8 +82,6 @@ $('#form-login')?.addEventListener('submit', async (e) => {
       errBox.textContent = mensajes[err.code] || 'Error de conexión.';
       errBox.classList.remove('oculto');
     }
-  } finally {
-    if (btnSub) btnSub.disabled = false;
   }
 });
 
@@ -121,7 +114,7 @@ $('#btn-guardar-config')?.addEventListener('click', () => {
   guardarBaseDeDatos();
 });
 
-// Renderizar la Tabla de forma segura
+// Renderizar la Tabla
 function renderizarTabla() {
   if (!columnas || columnas.length === 0) columnas = ['Lunes', 'Martes', 'Miércoles'];
   if (!filas || filas.length === 0) filas = ['08:00', '09:00', '10:00'];
@@ -157,7 +150,7 @@ function renderizarTabla() {
   }
 }
 
-// Interacciones
+// Interacciones de la planilla
 $('#horario-tbody')?.addEventListener('click', (e) => {
   const btnBorrar = e.target.closest('.btn-eliminar-tarea');
   if (btnBorrar) {
@@ -254,7 +247,7 @@ $('#btn-generar-imagen')?.addEventListener('click', async () => {
     const captureArea = $('#capture-area');
     if (!captureArea) return;
     const canvas = await html2canvas(captureArea, { backgroundColor: '#FFF2F4', scale: 2 });
-    if ($('#imagen-generada')) $('#imagen-generada'].src = canvas.toDataURL('image/png');
+    if ($('#imagen-generada')) $('#imagen-generada').src = canvas.toDataURL('image/png');
     if ($('#btn-descargar')) $('#btn-descargar').href = canvas.toDataURL('image/png');
     $('#modal-imagen')?.classList.remove('oculto');
   } finally { 

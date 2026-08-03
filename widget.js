@@ -3,12 +3,13 @@ import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10
 
 // REEMPLAZA ESTO CON TU CONFIGURACIÓN EXACTA
 const firebaseConfig = {
-  apiKey: "TU_API_KEY",
-  authDomain: "TU_PROYECTO.firebaseapp.com",
-  projectId: "TU_PROYECTO",
-  storageBucket: "TU_PROYECTO.appspot.com",
-  messagingSenderId: "TUS_NUMEROS",
-  appId: "TU_APP_ID"
+  apiKey: "AIzaSyBLzPOb6AbR3-2NqLkG0ETVWXeWY7tY7iI",
+  authDomain: "horarios-3f609.firebaseapp.com",
+  projectId: "horarios-3f609",
+  storageBucket: "horarios-3f609.firebasestorage.app",
+  messagingSenderId: "1002586000808",
+  appId: "1:1002586000808:web:27004906e10133064c219d",
+  measurementId: "G-0VGK0HWR4B"
 };
 
 const app = initializeApp(firebaseConfig);

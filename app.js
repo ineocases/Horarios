@@ -1,3 +1,11 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { 
+    getAuth, 
+    onAuthStateChanged, 
+    signInWithEmailAndPassword, 
+    createUserWithEmailAndPassword, 
+    signOut 
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import {
     getFirestore,
     doc,
@@ -8,8 +16,7 @@ import {
     query,
     where,
     getDocs
-}
-from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBLzPOb6AbR3-2NqLkG0ETVWXeWY7tY7iI",
@@ -214,11 +221,16 @@ function inicializarFirebaseSeguro() {
         mostrarPantalla('#pantalla-login');
       }
     });
-} catch (error) {
-  console.error("Error completo de Firebase:", error);
-  // Muestra el mensaje real en pantalla para saber qué falló
-  elementoDeError.textContent = "Error: " + error.message; 
-}
+  } catch (error) {
+    console.error("Error completo de Firebase:", error);
+    // Solución al problema de variable no definida 'elementoDeError'
+    const errBox = $('#login-error');
+    if (errBox) {
+        errBox.textContent = "Error: " + error.message; 
+        errBox.classList.remove('oculto');
+    }
+  }
+} // <--- ESTA ERA LA LLAVE FALTANTE QUE ROMPÍA LA APLICACIÓN
 
 // Autenticación
 $('#tab-login')?.addEventListener('click', () => cambiarTab('login'));
@@ -557,6 +569,7 @@ function mostrarPantalla(id) {
   const target = $(id);
   if (target) target.classList.remove('oculto');
 }
+
 // ==========================
 // INSTALAR WIDGET SCRIPTABLE
 // ==========================

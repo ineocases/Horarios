@@ -109,69 +109,32 @@
         <button type="button" id="btn-guardar-config" class="btn-principal">Guardar Cambios</button>
       </div>
     </div>
-  </div>
-
-  <!-- Modal para Agregar Actividad -->
-  <div id="modal-agregar" class="modal-overlay oculto">
-    <div class="modal">
-      <h3 id="modal-titulo">Nueva Actividad</h3>
-      <div class="modal-campo">
-        <label for="input-nota">Descripción</label>
-        <input type="text" id="input-nota" placeholder="Ej: Clases, Reunión, Gym..." maxlength="40" autocomplete="off">
-      </div>
-      <div class="modal-campo">
-        <label>Elige un ícono</label>
-        <div id="selector-iconos" class="iconos-grid"></div>
-      </div>
-      <div class="modal-botones">
-        <button type="button" id="btn-cancelar-modal" class="btn-secundario">Cancelar</button>
-        <button type="button" id="btn-guardar-entrada" class="btn-principal">Añadir</button>
-      </div>
+ <!-- Modal Tutorial Widget Scriptable -->
+  <div id="modal-widget" class="modal-overlay oculto">
+    <div class="modal modal-tutorial" style="position: relative; text-align: center; padding: 25px 20px;">
+      <!-- Botón de Cerrar -->
+      <span id="btn-cerrar-widget" class="btn-cerrar" style="position: absolute; top: 15px; right: 20px; font-size: 20px; cursor: pointer; color: #ff4d6d; font-weight: bold;">✕</span>
+      
+      <!-- Título -->
+      <h3 style="color: #D6336C; font-size: 20px; margin-top: 0; margin-bottom: 10px;">✨ Tu Widget de iOS</h3>
+      
+      <!-- Instrucciones -->
+      <p style="font-size: 14px; color: #555; margin-bottom: 15px;">Sigue estos pasos para llevar tu horario a la pantalla de inicio:</p>
+      
+      <ol style="font-size: 13px; color: #666; text-align: left; margin-bottom: 20px; background: #fff5f7; padding: 12px 15px 12px 30px; border-radius: 10px; border: 1px dashed #ffb6c1; line-height: 1.6;">
+        <li>Descarga la app <b>Scriptable</b> en la App Store.</li>
+        <li>Copia tu código con el botón de abajo.</li>
+        <li>Abre Scriptable, toca el <b>+</b> (arriba a la derecha), pega el código y presiona "Done".</li>
+        <li>Ve a tu inicio, añade un widget de Scriptable y selecciona tu nuevo script.</li>
+      </ol>
+      
+      <!-- Botón Inteligente de Copiado -->
+      <button id="btn-copiar-url" class="btn-principal" style="width: 100%; font-size: 14px; padding: 12px 20px;" data-codigo="">
+        📋 Copiar Código del Widget
+      </button>
     </div>
   </div>
 
-  <!-- Modal para ver/descargar la imagen -->
-  <div id="modal-imagen" class="modal-overlay oculto">
-    <div class="modal modal-imagen-contenido">
-      <h3>¡Tu Planilla está lista! ✨</h3>
-      <img id="imagen-generada" alt="Planilla generada">
-      <div class="modal-botones">
-        <button type="button" id="btn-cerrar-imagen" class="btn-secundario">Volver</button>
-        <a id="btn-descargar" class="btn-principal" download="mi-planilla-estetica.png">Descargar PNG</a>
-      </div>
-    </div>
-  </div>
-<!-- Modal Tutorial Widget Scriptable -->
-  <div id="modal-widget" class="modal-overlay oculto">
-    <div class="modal modal-tutorial">
-      <!-- Modal Tutorial Widget Scriptable -->
-  <div id="modal-widget" class="modal-overlay oculto">
-    <div class="modal modal-tutorial">
-<!-- Modal Instructivo para Scriptable (iOS) -->
-<div id="modal-widget" class="modal oculto">
-  <div class="modal-contenido" style="max-width: 350px; text-align: center; padding: 25px 20px;">
-    <!-- Botón de Cerrar -->
-    <span id="btn-cerrar-widget" class="btn-cerrar" style="position: absolute; top: 10px; right: 15px; font-size: 18px; cursor: pointer; color: #ff4d6d;">✕</span>
-    
-    <!-- Título -->
-    <h2 style="color: #D6336C; font-size: 20px; margin-top: 0; margin-bottom: 10px;">✨ Tu Widget de iOS</h2>
-    
-    <!-- Instrucciones -->
-    <p style="font-size: 14px; color: #555; margin-bottom: 15px;">Sigue estos pasos para llevar tu horario a la pantalla de inicio:</p>
-    
-    <ol style="font-size: 13px; color: #666; text-align: left; padding-left: 20px; line-height: 1.6; margin-bottom: 20px; background: #fff5f7; padding-top: 10px; padding-bottom: 10px; padding-right: 15px; border-radius: 10px; border: 1px dashed #ffb6c1;">
-      <li>Descarga la app <b>Scriptable</b> en la App Store.</li>
-      <li>Copia tu código con el botón de abajo.</li>
-      <li>Abre Scriptable, toca el <b>+</b> (arriba a la derecha), pega el código y presiona "Done".</li>
-      <li>Ve a tu inicio, añade un widget de Scriptable y selecciona tu nuevo script.</li>
-    </ol>
-    
-    <!-- Botón Inteligente de Copiado -->
-    <button id="btn-copiar-url" style="background: #D6336C; color: white; border: none; padding: 12px 20px; border-radius: 25px; font-weight: bold; cursor: pointer; width: 100%; font-size: 14px; box-shadow: 0 4px 10px rgba(214, 51, 108, 0.3); transition: all 0.3s ease;" data-codigo="">
-      📋 Copiar Código del Widget
-    </button>
-  </div>
-</div>
   <script type="module" src="app.js"></script>
 </body>
 </html>

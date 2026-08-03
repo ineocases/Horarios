@@ -29,30 +29,31 @@ const firebaseConfig = {
 };
 
 let columnas = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
-let filas = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00'];
+let filas = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00'];
 let tareas = [];
 let clasesDefinidas = []; 
 let claseActiva = null;   
 let editandoTareaId = null;
 
 const ICONOS = ['🌸', '💼', '📚', '☕', '🏋️', '✨', '💻', '🛒', '❤️', '📌'];
+const COLORES = ['#FFE8EC', '#D8F3DC', '#E0AAFF', '#FFDDD2', '#CAF0F8', '#FFF3B0'];
+
 let colSeleccionada = null, rowSeleccionada = null;
 let iconoSeleccionado = ICONOS[0];
+let colorSeleccionado = COLORES[0];
 
 let auth = null, db = null, usuarioActual = null, modoFormulario = 'login';
 const $ = (sel) => document.querySelector(sel);
 
-// Inyectar Estilos Personalizados
+// Estilos inyectados
 const estiloNuevasFunciones = document.createElement('style');
 estiloNuevasFunciones.innerHTML = `
-  /* Columnas de igual ancho y filas menos altas */
   table { table-layout: fixed !important; width: 100% !important; border-collapse: collapse; }
   th, td { width: auto !important; padding: 4px 6px !important; text-align: center; vertical-align: middle; }
   th { font-size: 14px !important; padding: 8px 4px !important; }
   td { height: 42px !important; }
   .celda-contenido { min-height: 38px !important; display: flex; flex-direction: column; justify-content: center; gap: 3px; padding: 2px !important; }
 
-  /* Tareas compactas */
   .tarea-bloque {
     position: relative !important;
     padding: 6px 8px !important;
@@ -64,7 +65,6 @@ estiloNuevasFunciones.innerHTML = `
     transition: transform 0.15s, box-shadow 0.15s;
   }
 
-  /* Acciones Flotantes (Al presionar en la tarea) */
   .tarea-acciones {
     display: none !important;
     position: absolute !important;
@@ -84,12 +84,6 @@ estiloNuevasFunciones.innerHTML = `
 
   .tarea-bloque.seleccionada .tarea-acciones {
     display: flex !important;
-    animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  }
-
-  @keyframes popIn {
-    from { opacity: 0; transform: translate(-50%, 5px) scale(0.9); }
-    to { opacity: 1; transform: translate(-50%, 0) scale(1); }
   }
 
   .btn-editar-tarea, .btn-eliminar-tarea {
@@ -106,19 +100,13 @@ estiloNuevasFunciones.innerHTML = `
     color: #d6336c !important;
   }
   .btn-eliminar-tarea { color: #ff4d6d !important; }
-  .btn-editar-tarea:hover, .btn-eliminar-tarea:hover { background: #ffd1dc !important; }
 
-  /* Barra de Clases */
   #barra-clases { display: flex; flex-direction: column; gap: 8px; margin: 12px auto; padding: 12px; background: #FFF2F4; border-radius: 15px; max-width: 900px; border: 2px dashed #ffb6c1; }
   .clases-lista { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; }
-  .clase-item { padding: 5px 10px; background: white; border: 2px solid #ffb6c1; border-radius: 20px; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 13px; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-  .clase-item:hover { transform: translateY(-2px); }
-  .clase-item.activa { background: #ffb6c1; color: white; transform: scale(1.05); border-color: #ff8da1; font-weight: bold; }
-  .btn-eliminar-clase { background: none; border: none; color: #ff6b81; cursor: pointer; font-weight: bold; font-size: 13px; padding: 0 2px; }
+  .clase-item { padding: 5px 10px; background: white; border: 2px solid #ffb6c1; border-radius: 20px; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 13px; transition: 0.2s; }
+  .clase-item.activa { background: #ffb6c1; color: white; transform: scale(1.05); }
+  .btn-eliminar-clase { background: none; border: none; color: #ff6b81; cursor: pointer; font-weight: bold; }
   .btn-nueva-clase { background: #ffd1dc; border: none; padding: 5px 10px; border-radius: 20px; cursor: pointer; font-weight: bold; color: #d6336c; font-size: 13px; }
-
-  /* Nota iPad */
-  .aviso-ipad { font-size: 12px; color: #d6336c; text-align: center; margin-top: 6px; font-weight: bold; }
 `;
 document.head.appendChild(estiloNuevasFunciones);
 
@@ -129,7 +117,6 @@ document.addEventListener('DOMContentLoaded', () => {
   inicializarFirebaseSeguro();
 });
 
-// --- BARRA DE CLASES RÁPIDAS ---
 function crearBarraClasesHTML() {
   const contenedorTabla = $('.table-responsive') || $('#horario-thead')?.parentElement;
   if (contenedorTabla && !$('#barra-clases')) {
@@ -148,7 +135,7 @@ function renderizarBarraClases() {
     <div style="font-size: 13px; color: #666; font-weight: bold; text-align: center;">🎨 Tus Clases Rápidas (Selecciona una y toca el horario):</div>
     <div class="clases-lista">
       ${clasesDefinidas.map(c => `
-        <div class="clase-item ${claseActiva && claseActiva.id === c.id ? 'activa' : ''}" data-id="${c.id}">
+        <div class="clase-item ${claseActiva && claseActiva.id === c.id ? 'activa' : ''}" data-id="${c.id}" style="border-left: 6px solid ${c.color || '#ffb6c1'}">
           <span>${c.icono}</span> ${c.nombre}
           <button class="btn-eliminar-clase solo-editar" data-id="${c.id}">✕</button>
         </div>
@@ -158,13 +145,13 @@ function renderizarBarraClases() {
   `;
 }
 
-// Eventos de la barra de clases
 document.addEventListener('click', (e) => {
   if (e.target.closest('#btn-crear-clase')) {
-    const nombre = prompt("Nombre de la clase (Ej: Estudiante):");
+    const nombre = prompt("Nombre de la clase (Ej: Inglés):");
     if (nombre) {
       const icono = prompt("Emoji para la clase (Ej: 📚, 💼, 🎓):") || '✨';
-      clasesDefinidas.push({ id: Date.now().toString(), nombre, icono });
+      const color = COLORES[Math.floor(Math.random() * COLORES.length)];
+      clasesDefinidas.push({ id: Date.now().toString(), nombre, icono, color });
       renderizarBarraClases();
       guardarDatos();
     }
@@ -191,7 +178,6 @@ document.addEventListener('click', (e) => {
     return;
   }
 
-  // Deseleccionar flotante al hacer clic fuera
   if (!e.target.closest('.tarea-bloque')) {
     document.querySelectorAll('.tarea-bloque.seleccionada').forEach(el => el.classList.remove('seleccionada'));
   }
@@ -199,9 +185,7 @@ document.addEventListener('click', (e) => {
 
 function inicializarFirebaseSeguro() {
   let firebaseRespondió = false;
-  setTimeout(() => {
-    if (!firebaseRespondió) mostrarPantalla('#pantalla-login');
-  }, 2000);
+  setTimeout(() => { if (!firebaseRespondió) mostrarPantalla('#pantalla-login'); }, 2000);
 
   try {
     const app = initializeApp(firebaseConfig);
@@ -222,91 +206,38 @@ function inicializarFirebaseSeguro() {
       }
     });
   } catch (error) {
-    console.error("Error completo de Firebase:", error);
-    // Solución al problema de variable no definida 'elementoDeError'
     const errBox = $('#login-error');
-    if (errBox) {
-        errBox.textContent = "Error: " + error.message; 
-        errBox.classList.remove('oculto');
-    }
+    if (errBox) { errBox.textContent = "Error: " + error.message; errBox.classList.remove('oculto'); }
   }
-} // <--- ESTA ERA LA LLAVE FALTANTE QUE ROMPÍA LA APLICACIÓN
-
-// Autenticación
-$('#tab-login')?.addEventListener('click', () => cambiarTab('login'));
-$('#tab-registro')?.addEventListener('click', () => cambiarTab('registro'));
-
-function cambiarTab(modo) {
-  modoFormulario = modo;
-  $('#tab-login')?.classList.toggle('activo', modo === 'login');
-  $('#tab-registro')?.classList.toggle('activo', modo === 'registro');
-  const btnSub = $('#btn-login-submit');
-  if (btnSub) btnSub.textContent = modo === 'login' ? 'Ingresar' : 'Crear cuenta';
-  $('#login-error')?.classList.add('oculto');
 }
 
-$('#form-login')?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const email = $('#login-email').value.trim();
-  const password = $('#login-password').value;
-  $('#login-error')?.classList.add('oculto');
-  
-  try {
-    if (modoFormulario === 'login') {
-      await signInWithEmailAndPassword(auth, email, password);
-    } else {
-      await createUserWithEmailAndPassword(auth, email, password);
-    }
-  } catch (err) {
-    const mensajes = { 'auth/invalid-credential': 'Datos incorrectos.', 'auth/email-already-in-use': 'El correo ya existe.', 'auth/weak-password': 'Mínimo 6 caracteres.' };
-    const errBox = $('#login-error');
-    if (errBox) {
-      errBox.textContent = mensajes[err.code] || 'Error de conexión.';
-      errBox.classList.remove('oculto');
-    }
-  }
-});
-
-$('#btn-logout')?.addEventListener('click', () => {
-  if (auth) signOut(auth);
-});
-
-// Configurar Filas y Columnas
+// Configuración de tabla
 $('#btn-abrir-config')?.addEventListener('click', () => {
   if ($('#input-cols')) $('#input-cols').value = columnas.join(', ');
   if ($('#input-rows')) $('#input-rows').value = filas.join(', ');
   $('#modal-config')?.classList.remove('oculto');
 });
 
-$('#btn-cancelar-config')?.addEventListener('click', () => {
-  $('#modal-config')?.classList.add('oculto');
-});
+$('#btn-cancelar-config')?.addEventListener('click', () => $('#modal-config')?.classList.add('oculto'));
 
 $('#btn-guardar-config')?.addEventListener('click', () => {
   const nuevasCols = $('#input-cols')?.value.split(',').map(s => s.trim()).filter(Boolean);
   const nuevasFilas = $('#input-rows')?.value.split(',').map(s => s.trim()).filter(Boolean);
-  
-  if (nuevasCols && nuevasCols.length > 0) columnas = nuevasCols;
-  if (nuevasFilas && nuevasFilas.length > 0) filas = nuevasFilas;
-
+  if (nuevasCols?.length > 0) columnas = nuevasCols;
+  if (nuevasFilas?.length > 0) filas = nuevasFilas;
   tareas = tareas.filter(t => columnas.includes(t.col) && filas.includes(t.row));
-  
   $('#modal-config')?.classList.add('oculto');
   renderizarTabla();
   guardarDatos();
 });
 
-// Renderizar la Tabla
 function renderizarTabla() {
-  if (!columnas || columnas.length === 0) columnas = ['Lunes', 'Martes', 'Miércoles'];
-  if (!filas || filas.length === 0) filas = ['08:00', '09:00', '10:00'];
+  if (!columnas.length) columnas = ['Lunes', 'Martes', 'Miércoles'];
+  if (!filas.length) filas = ['08:00', '09:00', '10:00'];
 
   const thead = $('#horario-thead');
   if (thead) {
-    thead.innerHTML = `<tr>
-      <th>Horario</th>
-      ${columnas.map(col => `<th>${col}</th>`).join('')}
-    </tr>`;
+    thead.innerHTML = `<tr><th>Horario</th>${columnas.map(col => `<th>${col}</th>`).join('')}</tr>`;
   }
 
   const tbody = $('#horario-tbody');
@@ -317,7 +248,7 @@ function renderizarTabla() {
         ${columnas.map(col => {
           const tareasCelda = tareas.filter(t => t.col === col && t.row === fila);
           const html = tareasCelda.map(t => `
-            <div class="tarea-bloque" data-id="${t.id}">
+            <div class="tarea-bloque" data-id="${t.id}" style="background-color: ${t.color || '#FFE8EC'};">
               <div class="tarea-info">
                 <span>${t.icono}</span>
                 <span class="tarea-texto">${t.nota}</span>
@@ -335,11 +266,9 @@ function renderizarTabla() {
   }
 }
 
-// Interacciones con la Tabla
 $('#horario-tbody')?.addEventListener('click', (e) => {
   if (document.body.classList.contains('exportando')) return;
 
-  // 1. Borrar tarea desde flotante
   const btnBorrar = e.target.closest('.btn-eliminar-tarea');
   if (btnBorrar) {
     e.stopPropagation();
@@ -349,7 +278,6 @@ $('#horario-tbody')?.addEventListener('click', (e) => {
     return;
   }
 
-  // 2. Editar tarea desde flotante
   const btnEditar = e.target.closest('.btn-editar-tarea');
   if (btnEditar) {
     e.stopPropagation();
@@ -362,25 +290,23 @@ $('#horario-tbody')?.addEventListener('click', (e) => {
       if ($('#modal-titulo')) $('#modal-titulo').textContent = `Editar: ${tarea.col} • ${tarea.row}`;
       if ($('#input-nota')) $('#input-nota').value = tarea.nota;
       iconoSeleccionado = tarea.icono || ICONOS[0];
+      colorSeleccionado = tarea.color || COLORES[0];
       construirIconos();
+      construirColores();
       $('#modal-agregar')?.classList.remove('oculto');
     }
     return;
   }
 
-  // 3. Tocar un bloque de tarea (Abre menú flotante)
   const bloqueTarea = e.target.closest('.tarea-bloque');
   if (bloqueTarea) {
     e.stopPropagation();
     const yaSeleccionada = bloqueTarea.classList.contains('seleccionada');
     document.querySelectorAll('.tarea-bloque.seleccionada').forEach(el => el.classList.remove('seleccionada'));
-    if (!yaSeleccionada) {
-      bloqueTarea.classList.add('seleccionada');
-    }
+    if (!yaSeleccionada) bloqueTarea.classList.add('seleccionada');
     return;
   }
 
-  // 4. Tocar celda vacía (Sello o Modal)
   const celda = e.target.closest('td[data-col]');
   if (celda) {
     document.querySelectorAll('.tarea-bloque.seleccionada').forEach(el => el.classList.remove('seleccionada'));
@@ -390,7 +316,8 @@ $('#horario-tbody')?.addEventListener('click', (e) => {
         col: celda.dataset.col, 
         row: celda.dataset.row, 
         nota: claseActiva.nombre, 
-        icono: claseActiva.icono 
+        icono: claseActiva.icono,
+        color: claseActiva.color || COLORES[0]
       });
       renderizarTabla();
       guardarDatos();
@@ -400,18 +327,31 @@ $('#horario-tbody')?.addEventListener('click', (e) => {
   }
 });
 
-// Modal de Tareas
 function construirIconos() {
   const selector = $('#selector-iconos');
   if (!selector) return;
   selector.innerHTML = ICONOS.map(ic => `<div class="icono-opcion ${ic === iconoSeleccionado ? 'seleccionado' : ''}" data-icono="${ic}">${ic}</div>`).join('');
 }
 
+function construirColores() {
+  const selector = $('#selector-colores');
+  if (!selector) return;
+  selector.innerHTML = COLORES.map(c => `<div class="color-opcion ${c === colorSeleccionado ? 'seleccionado' : ''}" data-color="${c}" style="background-color: ${c};"></div>`).join('');
+}
+
 $('#selector-iconos')?.addEventListener('click', (e) => {
   const target = e.target.closest('.icono-opcion');
-  if (target && target.dataset.icono) {
+  if (target?.dataset.icono) {
     iconoSeleccionado = target.dataset.icono;
     construirIconos();
+  }
+});
+
+$('#selector-colores')?.addEventListener('click', (e) => {
+  const target = e.target.closest('.color-opcion');
+  if (target?.dataset.color) {
+    colorSeleccionado = target.dataset.color;
+    construirColores();
   }
 });
 
@@ -422,15 +362,13 @@ function abrirModalTarea(col, row) {
   if ($('#modal-titulo')) $('#modal-titulo').textContent = `${col} • ${row}`;
   if ($('#input-nota')) $('#input-nota').value = '';
   iconoSeleccionado = ICONOS[0];
+  colorSeleccionado = COLORES[0];
   construirIconos();
+  construirColores();
   $('#modal-agregar')?.classList.remove('oculto');
-  setTimeout(() => $('#input-nota')?.focus(), 100);
 }
 
-$('#btn-cancelar-modal')?.addEventListener('click', () => {
-  $('#modal-agregar')?.classList.add('oculto');
-  editandoTareaId = null;
-});
+$('#btn-cancelar-modal')?.addEventListener('click', () => $('#modal-agregar')?.classList.add('oculto'));
 
 $('#btn-guardar-entrada')?.addEventListener('click', () => {
   const nota = $('#input-nota')?.value.trim();
@@ -440,44 +378,34 @@ $('#btn-guardar-entrada')?.addEventListener('click', () => {
       if (index !== -1) {
         tareas[index].nota = nota;
         tareas[index].icono = iconoSeleccionado;
+        tareas[index].color = colorSeleccionado;
       }
     } else {
-      tareas.push({ id: Date.now().toString(), col: colSeleccionada, row: rowSeleccionada, nota, icono: iconoSeleccionado });
+      tareas.push({ id: Date.now().toString(), col: colSeleccionada, row: rowSeleccionada, nota, icono: iconoSeleccionado, color: colorSeleccionado });
     }
-    
     renderizarTabla();
     guardarDatos();
     $('#modal-agregar')?.classList.add('oculto');
-    editandoTareaId = null;
-  } else {
-    alert("Escribe una descripción.");
   }
 });
 
-// Guardar Datos
 async function guardarDatos() {
   localStorage.setItem('miPlanillaEstetica', JSON.stringify({ columnas, filas, tareas, clasesDefinidas }));
-
   if (usuarioActual && db) {
     try {
       await setDoc(doc(db, 'planilla_estetica', usuarioActual.uid), { columnas, filas, tareas, clasesDefinidas });
       mostrarNotificacion('Guardado 💖');
-    } catch (err) { 
-      mostrarNotificacion('Guardado Local 📁');
-    }
-  } else {
-    mostrarNotificacion('Guardado Local 📁');
-  }
+    } catch (err) { mostrarNotificacion('Guardado Local 📁'); }
+  } else { mostrarNotificacion('Guardado Local 📁'); }
 }
 
-// Cargar Datos
 function cargarDatosLocales() {
-  const datosLocales = JSON.parse(localStorage.getItem('miPlanillaEstetica'));
-  if (datosLocales) {
-    if (datosLocales.columnas?.length > 0) columnas = datosLocales.columnas;
-    if (datosLocales.filas?.length > 0) filas = datosLocales.filas;
-    if (datosLocales.tareas) tareas = datosLocales.tareas;
-    if (datosLocales.clasesDefinidas) clasesDefinidas = datosLocales.clasesDefinidas;
+  const d = JSON.parse(localStorage.getItem('miPlanillaEstetica'));
+  if (d) {
+    if (d.columnas?.length) columnas = d.columnas;
+    if (d.filas?.length) filas = d.filas;
+    if (d.tareas) tareas = d.tareas;
+    if (d.clasesDefinidas) clasesDefinidas = d.clasesDefinidas;
   }
 }
 
@@ -487,12 +415,10 @@ async function cargarBaseDeDatos(uid) {
     const snap = await getDoc(doc(db, 'planilla_estetica', uid));
     if (snap.exists()) {
       const data = snap.data();
-      if (data.columnas?.length > 0) columnas = data.columnas;
-      if (data.filas?.length > 0) filas = data.filas;
+      if (data.columnas?.length) columnas = data.columnas;
+      if (data.filas?.length) filas = data.filas;
       if (data.tareas) tareas = data.tareas;
       if (data.clasesDefinidas) clasesDefinidas = data.clasesDefinidas;
-      
-      localStorage.setItem('miPlanillaEstetica', JSON.stringify({ columnas, filas, tareas, clasesDefinidas }));
     }
   } catch (err) {}
   renderizarTabla();
@@ -507,107 +433,55 @@ function mostrarNotificacion(msg) {
   setTimeout(() => t.classList.add('oculto'), 2000);
 }
 
-// --- DESCARGAR IMAGEN HD (COMPATIBLE CON IPAD / IOS) ---
+// Descargar Imagen
 $('#btn-generar-imagen')?.addEventListener('click', async () => {
   document.body.classList.add('exportando');
-  document.querySelectorAll('.tarea-bloque.seleccionada').forEach(el => el.classList.remove('seleccionada'));
-  if ($('#barra-clases')) $('#barra-clases').style.display = 'none';
-
   await new Promise(r => setTimeout(r, 150)); 
   try {
-    const captureArea = $('#capture-area');
-    if (!captureArea) return;
-
-    const canvas = await html2canvas(captureArea, { backgroundColor: '#FFF2F4', scale: 2 });
+    const canvas = await html2canvas($('#capture-area'), { backgroundColor: '#FFF2F4', scale: 2 });
     const imgData = canvas.toDataURL('image/png');
-
-    const imgGen = $('#imagen-generada');
-    if (imgGen) imgGen.src = imgData;
-
-    const btnDescargar = $('#btn-descargar');
-    if (btnDescargar) {
-      btnDescargar.href = imgData;
-      btnDescargar.download = 'Mi_Planilla_Semanal.png';
-      
-      // Adaptación especial para iPad / Safari
-      btnDescargar.onclick = (e) => {
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-        if (isIOS) {
-          const win = window.open('');
-          if (win) {
-            win.document.write(`<img src="${imgData}" style="max-width:100%;height:auto;" /><br><p style="font-family:sans-serif;text-align:center;color:#d6336c;"><b>Mantén presionada la imagen para guardarla en Fotos.</b></p>`);
-          }
-        }
-      };
-    }
-
-    // Agregar aviso en el modal para usuarios de iPad
-    let avisoPad = $('.aviso-ipad');
-    if (!avisoPad && $('#modal-imagen')) {
-      avisoPad = document.createElement('div');
-      avisoPad.className = 'aviso-ipad';
-      avisoPad.textContent = '📱 En iPad / iPhone: Si el botón de descargar no inicia la descarga, mantén presionada la imagen de arriba y elige "Guardar en Fotos".';
-      $('#modal-imagen').querySelector('.modal-contenido')?.appendChild(avisoPad);
-    }
-
+    if ($('#imagen-generada')) $('#imagen-generada').src = imgData;
+    if ($('#btn-descargar')) $('#btn-descargar').href = imgData;
     $('#modal-imagen')?.classList.remove('oculto');
-  } finally { 
-    document.body.classList.remove('exportando'); 
-    if ($('#barra-clases')) $('#barra-clases').style.display = 'flex';
-  }
+  } finally { document.body.classList.remove('exportando'); }
 });
 
-$('#btn-cerrar-imagen')?.addEventListener('click', () => {
-  $('#modal-imagen')?.classList.add('oculto');
-});
+$('#btn-cerrar-imagen')?.addEventListener('click', () => $('#modal-imagen')?.classList.add('oculto'));
 
 function mostrarPantalla(id) {
-  ['#pantalla-carga', '#pantalla-login', '#pantalla-app'].forEach(s => {
-    const el = $(s);
-    if (el) el.classList.add('oculto');
-  });
-  const target = $(id);
-  if (target) target.classList.remove('oculto');
+  ['#pantalla-carga', '#pantalla-login', '#pantalla-app'].forEach(s => $(s)?.classList.add('oculto'));
+  $(id)?.classList.remove('oculto');
 }
 
-// ==========================
-// INSTALAR WIDGET SCRIPTABLE
-// ==========================
+// ==========================================
+// WIDGET 1 (Compacto) & WIDGET 2 (Ancho Canva)
+// ==========================================
 
-$("#btn-instalar-widget")?.addEventListener("click", instalarWidget);
+$("#btn-instalar-widget")?.addEventListener("click", () => instalarWidget('v1'));
+$("#btn-instalar-widget-2")?.addEventListener("click", () => instalarWidget('v2'));
 
-async function instalarWidget() {
-  if (!usuarioActual) {
-    alert("Debes iniciar sesión para generar tu widget.");
-    return;
-  }
+async function obtenerTokenWidget() {
+  if (!usuarioActual) { alert("Debes iniciar sesión para generar tu widget."); return null; }
+  const q = query(collection(db, "widgets"), where("uid", "==", usuarioActual.uid));
+  const querySnapshot = await getDocs(q);
+  if (!querySnapshot.empty) return querySnapshot.docs[0].id;
 
-  try {
-    let token;
-    
-    // 1. Buscar si el usuario ya tiene token
-    const q = query(collection(db, "widgets"), where("uid", "==", usuarioActual.uid));
-    const querySnapshot = await getDocs(q);
+  const token = Date.now().toString(36) + Math.random().toString(36).substring(2);
+  await setDoc(doc(db, "widgets", token), { uid: usuarioActual.uid, activo: true, creado: serverTimestamp() });
+  return token;
+}
 
-    if (!querySnapshot.empty) {
-      token = querySnapshot.docs[0].id;
-    } else {
-      token = (typeof crypto !== 'undefined' && crypto.randomUUID) 
-              ? crypto.randomUUID() 
-              : Date.now().toString(36) + Math.random().toString(36).substring(2);
-              
-      const widgetRef = doc(db, "widgets", token);
-      await setDoc(widgetRef, {
-        uid: usuarioActual.uid,
-        activo: true,
-        creado: serverTimestamp()
-      });
-    }
-    
-    // 2. Generar el código para Scriptable
-    const urlNetlify = `https://friendly-melba-0783ef.netlify.app/.netlify/functions/horario?token=${token}`;
-    
-    const codigoScriptable = `const url = "${urlNetlify}";
+async function instalarWidget(tipo) {
+  const token = await obtenerTokenWidget();
+  if (!token) return;
+
+  const urlNetlify = `https://friendly-melba-0783ef.netlify.app/.netlify/functions/horario?token=${token}`;
+  
+  let codigoScriptable = "";
+
+  if (tipo === 'v1') {
+    // Script Compacto (Lista vertical)
+    codigoScriptable = `const url = "${urlNetlify}";
 const req = new Request(url);
 const res = await req.loadString();
 let widget = new ListWidget();
@@ -622,30 +496,71 @@ contenido.font = Font.systemFont(12);
 contenido.textColor = new Color("#5C4A47");
 if (config.runsInWidget) { Script.setWidget(widget); } else { widget.presentSmall(); }
 Script.complete();`;
+  } else {
+    // Script 2: Ancho Estilo Canva Semanal (Formato horizontal con horarios agrupados)
+    codigoScriptable = `const url = "${urlNetlify}&formato=completo";
+const req = new Request(url);
+const datos = await req.loadJSON();
 
-    // 3. Pasar el código al botón de copiar y mostrar el modal
-    const btnCopiar = $("#btn-copiar-url");
-    if (btnCopiar) btnCopiar.dataset.codigo = codigoScriptable;
-    
-    $("#modal-widget")?.classList.remove("oculto");
+let widget = new ListWidget();
+widget.backgroundColor = new Color("#FFF2F4");
+widget.setPadding(12, 12, 12, 12);
 
-  } catch (e) {
-    console.error("Error al gestionar el widget:", e);
-    alert("Error al generar el código. Revisa la consola.");
+let header = widget.addText("🌸 MI SEMANA CANVA");
+header.font = Font.boldSystemFont(13);
+header.textColor = new Color("#D6336C");
+header.centerAlign();
+widget.addSpacer(8);
+
+let stackGrid = widget.addStack();
+stackGrid.layoutHorizontally();
+
+const dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
+
+dias.forEach((dia, idx) => {
+  let col = stackGrid.addStack();
+  col.layoutVertically();
+  
+  let txtDia = col.addText(dia.substring(0,3).toUpperCase());
+  txtDia.font = Font.boldSystemFont(10);
+  txtDia.textColor = new Color("#E87A90");
+  col.addSpacer(4);
+  
+  let tareasDia = datos[dia] || [];
+  if (tareasDia.length === 0) {
+    let libre = col.addText("☕ Libre");
+    libre.font = Font.systemFont(9);
+    libre.textColor = new Color("#999999");
+  } else {
+    tareasDia.forEach(t => {
+      let item = col.addText(\`\${t.icono || '📌'} \${t.nota}\\n⏱ \${t.rango}\`);
+      item.font = Font.systemFont(9);
+      item.textColor = new Color("#333333");
+      col.addSpacer(3);
+    });
   }
+  
+  if (idx < dias.length - 1) { stackGrid.addSpacer(6); }
+});
+
+if (config.runsInWidget) { Script.setWidget(widget); } else { widget.presentMedium(); }
+Script.complete();`;
+  }
+
+  const btnCopiar = $("#btn-copiar-url");
+  if (btnCopiar) btnCopiar.dataset.codigo = codigoScriptable;
+  if ($("#titulo-modal-widget")) {
+    $("#titulo-modal-widget").textContent = tipo === 'v1' ? "✨ Widget 1 (Compacto)" : "🎨 Widget 2 (Ancho Canva)";
+  }
+  
+  $("#modal-widget")?.classList.remove("oculto");
 }
 
-// ------------------------------------
-// Eventos del Modal
-// ------------------------------------
-$("#btn-cerrar-widget")?.addEventListener("click", () => {
-  $("#modal-widget")?.classList.add("oculto");
-});
+$("#btn-cerrar-widget")?.addEventListener("click", () => $("#modal-widget")?.classList.add("oculto"));
 
 $("#btn-copiar-url")?.addEventListener("click", async (e) => {
   const btn = e.target;
   const codigo = btn.dataset.codigo;
-  
   if (!codigo) return;
   
   try {
@@ -653,14 +568,11 @@ $("#btn-copiar-url")?.addEventListener("click", async (e) => {
     const textoOriginal = btn.textContent;
     btn.textContent = "¡Código Copiado! ✨";
     btn.style.background = "#E87A90";
-    btn.style.color = "white";
-    
     setTimeout(() => {
       btn.textContent = textoOriginal;
       btn.style.background = "";
-      btn.style.color = "";
     }, 2500);
   } catch (error) {
-    alert("Tu navegador bloqueó la copia automática.");
+    alert("No se pudo copiar el código automáticamente.");
   }
 });

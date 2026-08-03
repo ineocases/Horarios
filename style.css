@@ -1,14 +1,14 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --fondo-general: #FFF2F4; /* Fondo rosita tierno como la foto */
+  --fondo-general: #FFF2F4;
   --blanco-tarjeta: #FFFFFF;
   --rosa-pastel: #FFE8EC;
   --rosa-texto: #E87A90;
   --rosa-hover: #D6657D;
   --gris-texto: #8C7377;
   --borde-tarjeta: #FCE4E8;
-  --sombra-suave: 0 10px 30px rgba(232, 122, 144, 0.08);
+  --sombra-suave: 0 12px 35px rgba(232, 122, 144, 0.08);
   --radio-tarjeta: 24px;
 }
 
@@ -53,128 +53,114 @@ button, input, textarea { font-family: inherit; }
 .badge-error { background: #FFD4D4; color: #9E1C1C; padding: 5px 12px; border-radius: 100px; font-size: 12px; font-weight: 700; }
 #usuario-email { color: var(--gris-texto); font-weight: 600; }
 
-main { max-width: 1200px; margin: 0 auto; padding: 30px 20px 100px; }
+main { max-width: 1050px; margin: 0 auto; padding: 30px 20px 80px; }
 .controles-superiores { display: flex; justify-content: flex-end; margin-bottom: 20px; }
 
-/* Contenedor tipo Planner (Hoja general) */
+/* Contenedor tipo Planilla Canva (Hoja A4 limpia) */
 #capture-area {
-  background: var(--fondo-general);
-  padding: 30px 20px;
-  border-radius: 30px;
+  background: var(--blanco-tarjeta);
+  border: 3px solid var(--borde-tarjeta);
+  border-radius: 32px;
+  padding: 45px 35px;
   position: relative;
+  box-shadow: var(--sombra-suave);
 }
 
-.vector-flor-arriba {
-  text-align: center;
-  font-size: 20px;
-  letter-spacing: 6px;
-  margin-bottom: 5px;
-  opacity: 0.9;
-}
+.vector-flor-arriba { text-align: center; font-size: 20px; letter-spacing: 6px; margin-bottom: 10px; opacity: 0.9; }
+.vector-flor-abajo { text-align: center; font-size: 18px; letter-spacing: 6px; margin-top: 25px; opacity: 0.8; }
 
-.titulo-planner { text-align: center; margin-bottom: 35px; }
+.titulo-planner { text-align: center; margin-bottom: 30px; }
 .titulo-planner h2 {
   font-family: 'Playfair Display', serif;
-  font-size: 38px;
+  font-size: 36px;
   color: var(--rosa-texto);
   font-weight: 700;
   letter-spacing: 1px;
 }
 .estrellas-sub { font-size: 14px; margin-top: 4px; color: var(--rosa-texto); opacity: 0.8; }
 
-/* Grid de Tarjetas Estilo Referencia */
-.planner-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 24px;
-}
-
-/* Tarjeta individual por Día */
-.dia-tarjeta {
-  background: var(--blanco-tarjeta);
-  border-radius: var(--radio-tarjeta);
+/* Tabla / Planilla Estética */
+.tabla-contenedor { overflow-x: auto; }
+.tabla-horario {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
   border: 2px solid var(--borde-tarjeta);
-  padding: 24px 20px;
-  min-height: 220px;
-  box-shadow: var(--sombra-suave);
-  display: flex;
-  flex-direction: column;
-  transition: transform 0.2s;
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(--blanco-tarjeta);
 }
 
-.dia-header {
-  font-family: 'Playfair Display', serif;
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--rosa-texto);
-  margin-bottom: 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px dashed var(--borde-tarjeta);
-  padding-bottom: 8px;
-}
-
-.btn-agregar-en-dia {
-  background: var(--rosa-pastel);
-  border: none;
-  color: var(--rosa-texto);
-  width: 28px; height: 28px;
-  border-radius: 50%;
-  font-weight: bold;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 14px;
-  transition: transform 0.15s;
-}
-.btn-agregar-en-dia:hover { transform: scale(1.1); background: var(--rosa-texto); color: white; }
-
-/* Contenedor de Actividades dentro del día */
-.dia-cuerpo {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  flex: 1;
-}
-
-.sin-planes {
+.tabla-horario th, .tabla-horario td {
+  border-bottom: 1px solid var(--borde-tarjeta);
+  border-right: 1px solid var(--borde-tarjeta);
   text-align: center;
-  color: #B89C9F;
+}
+.tabla-horario th:last-child, .tabla-horario td:last-child { border-right: none; }
+.tabla-horario tr:last-child td { border-bottom: none; }
+
+.tabla-horario th {
+  background: var(--rosa-pastel);
+  color: var(--rosa-texto);
+  padding: 16px 12px;
   font-size: 13px;
-  margin: auto;
-  font-style: italic;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-family: 'Playfair Display', serif;
 }
 
-/* Elemento de Tarea (Bloque blanco con icono) */
-.bloque-tarea {
+.tabla-horario td:first-child {
+  background: var(--rosa-pastel);
+  color: var(--rosa-texto);
+  font-size: 13px;
+  font-weight: 700;
+  width: 15%;
+  padding: 12px;
+}
+
+.tabla-horario td:not(:first-child) {
+  width: 17%;
+  height: 90px;
+  vertical-align: middle;
+  padding: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.tabla-horario td:not(:first-child):hover {
   background: #FFF9FA;
+}
+
+/* Tareas dentro de la planilla */
+.celda-contenido { display: flex; flex-direction: column; gap: 6px; justify-content: center; height: 100%; }
+.tarea-bloque {
+  background: var(--fondo-general);
   border: 1px solid var(--borde-tarjeta);
-  border-radius: 14px;
-  padding: 12px 14px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.02);
   text-align: left;
 }
-
-.tarea-info-izq { display: flex; align-items: center; gap: 12px; overflow: hidden; }
-.tarea-icono-box { font-size: 22px; }
-.tarea-detalles { display: flex; flex-direction: column; overflow: hidden; }
-.tarea-hora { font-size: 11px; font-weight: 700; color: var(--rosa-texto); letter-spacing: 0.5px; }
-.tarea-texto { font-size: 13px; font-weight: 600; color: #5C4A47; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
+.tarea-info { display: flex; align-items: center; gap: 8px; overflow: hidden; }
+.tarea-texto { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #5C4A47; }
 .btn-eliminar-tarea {
-  background: none; border: none; color: #D6336C; cursor: pointer; padding: 4px 8px; font-weight: bold; font-size: 12px; border-radius: 6px; opacity: 0.6;
+  background: none; border: none; color: #D6336C; cursor: pointer; padding: 2px 6px; font-weight: bold; border-radius: 4px; font-size: 11px;
 }
-.btn-eliminar-tarea:hover { opacity: 1; background: rgba(214,51,108,0.08); }
+.btn-eliminar-tarea:hover { background: rgba(214,51,108,0.1); }
 
-/* Botones flotantes y modales */
-.btn-flotante { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--rosa-texto); color: white; border: none; padding: 16px 36px; border-radius: 100px; font-weight: 700; font-size: 15px; box-shadow: 0 10px 25px rgba(232, 122, 144, 0.3); cursor: pointer; z-index: 90; }
-.btn-flotante:hover { background: var(--rosa-hover); transform: translateX(-50%) translateY(-3px); }
+/* Botón flotante fuera de la planilla para evitar superposiciones */
+.contenedor-btn-descarga { text-align: center; margin-top: 35px; }
+.btn-flotante { background: var(--rosa-texto); color: white; border: none; padding: 16px 38px; border-radius: 100px; font-weight: 700; font-size: 15px; box-shadow: 0 10px 25px rgba(232, 122, 144, 0.3); cursor: pointer; transition: transform 0.2s, background 0.2s; }
+.btn-flotante:hover { background: var(--rosa-hover); transform: translateY(-3px); }
 
 .toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: var(--rosa-texto); color: white; padding: 10px 24px; border-radius: 100px; font-size: 13px; z-index: 200; font-weight: 600; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
 
+/* Modales */
 .modal-overlay { position: fixed; inset: 0; background: rgba(92, 74, 71, 0.4); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 300; padding: 20px; }
 .modal { background: var(--blanco-tarjeta); border-radius: var(--radio-tarjeta); padding: 32px; width: 100%; max-width: 400px; box-shadow: var(--sombra-suave); border: 2px solid var(--borde-tarjeta); }
 .modal h3 { color: var(--rosa-texto); margin-bottom: 8px; font-size: 22px; font-family: 'Playfair Display', serif; }
@@ -194,6 +180,6 @@ main { max-width: 1200px; margin: 0 auto; padding: 30px 20px 100px; }
 body.exportando .solo-editar { display: none !important; }
 
 @media (max-width: 768px) {
-  .planner-grid { grid-template-columns: 1fr; }
-  #capture-area { padding: 10px; }
+  #capture-area { padding: 15px 10px; }
+  .tabla-horario th, .tabla-horario td { padding: 8px 4px; font-size: 11px; }
 }

@@ -43,16 +43,20 @@
     <nav class="navbar">
       <span class="logo">🌸 Horario</span>
       <div class="nav-derecha">
-        <span id="banner-error" class="badge-error oculto">Error de conexión (Usa Live Server)</span>
+        <span id="banner-error" class="badge-error oculto">Modo Local Activo</span>
         <span id="usuario-email"></span>
         <button id="btn-logout" class="btn-secundario oculto" type="button">Salir</button>
       </div>
     </nav>
 
-    <div id="mensaje-guardado" class="toast oculto">Sincronizado en la nube ✓</div>
+    <div id="mensaje-guardado" class="toast oculto">Sincronizado ✓</div>
 
     <main>
-      <!-- Esta es la hoja A4 como la de Canva -->
+      <div class="controles-superiores solo-editar">
+        <button id="btn-abrir-config" class="btn-secundario">⚙️ Configurar Filas y Columnas</button>
+      </div>
+
+      <!-- Esta es la hoja A4 -->
       <div id="capture-area">
         <div class="decoracion-clip">📎</div>
         <div class="decoracion-sparkle">✨</div>
@@ -63,18 +67,11 @@
         
         <div class="tabla-contenedor">
           <table class="tabla-horario">
-            <thead>
-              <tr>
-                <th>Horas</th>
-                <th>Lunes</th>
-                <th>Martes</th>
-                <th>Miércoles</th>
-                <th>Jueves</th>
-                <th>Viernes</th>
-              </tr>
+            <thead id="horario-thead">
+              <!-- Renderizado por JS dinámicamente -->
             </thead>
             <tbody id="horario-tbody">
-              <!-- Renderizado por app.js -->
+              <!-- Renderizado por JS dinámicamente -->
             </tbody>
           </table>
         </div>
@@ -84,13 +81,36 @@
     <button id="btn-generar-imagen" class="btn-flotante" type="button">📸 Descargar Imagen</button>
   </div>
 
+  <!-- Modal para Configurar la Tabla -->
+  <div id="modal-config" class="modal-overlay oculto">
+    <div class="modal">
+      <h3>Estructura de la Tabla</h3>
+      <p class="subtitulo">Separa los elementos usando comas (,)</p>
+      
+      <div class="modal-campo">
+        <label for="input-cols">Columnas (Días o Categorías)</label>
+        <textarea id="input-cols" rows="2" placeholder="Lunes, Martes, Miércoles..."></textarea>
+      </div>
+      
+      <div class="modal-campo">
+        <label for="input-rows">Filas (Horarios o Tramos)</label>
+        <textarea id="input-rows" rows="3" placeholder="08:00, 09:00, 10:00..."></textarea>
+      </div>
+      
+      <div class="modal-botones">
+        <button type="button" id="btn-cancelar-config" class="btn-secundario">Cancelar</button>
+        <button type="button" id="btn-guardar-config" class="btn-principal">Aplicar Cambios</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal para agregar tareas -->
   <div id="modal-agregar" class="modal-overlay oculto">
     <div class="modal">
       <h3 id="modal-titulo">Agregar Actividad</h3>
       <div class="modal-campo">
-        <label for="input-nota">Descripción (Ej: Reunión)</label>
-        <input type="text" id="input-nota" placeholder="Escribe aquí..." maxlength="40" autocomplete="off">
+        <label for="input-nota">Descripción</label>
+        <input type="text" id="input-nota" placeholder="Ej: Reunión, Estudiar, Gym..." maxlength="40" autocomplete="off">
       </div>
       <div class="modal-campo">
         <label>Elige un ícono</label>
@@ -115,7 +135,6 @@
     </div>
   </div>
 
-  <!-- Conectamos la lógica -->
   <script type="module" src="app.js"></script>
 </body>
 </html>

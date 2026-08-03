@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi Horario ✨</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌸</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --rosa: #FF8FAB;
+    --rosa-oscuro: #E8628C;
+    --rosa-suave: #FFE4EC;
+    --fondo: #FFF7F9;
+    --crema: #FFFDFB;
+    --texto: #4A3B42;
+    --texto-suave: #A88796;
+    --sombra: 0 10px 30px rgba(232, 98, 140, 0.16);
+    --radio: 22px;
+    --radio-chico: 14px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Quicksand', sans-serif;
+    background-color: var(--fondo);
+    background-image: radial-gradient(circle, rgba(232,98,140,0.10) 1.5px, transparent 1.5px);
+    background-size: 24px 24px;
+    min-height: 100vh;
+    color: var(--texto);
+    line-height: 1.4;
+  }
+
+  h1, h2, h3, .logo, .tab, .btn-principal, .btn-secundario, .dia-nombre, .btn-flotante {
+    font-family: 'Baloo 2', sans-serif;
+  }
+
+  .oculto { display: none !important; }
+  button, input, a { font-family: inherit; }
+
+  :focus-visible { outline: 3px solid var(--rosa-oscuro); outline-offset: 2px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* ---------- Pantalla de carga ---------- */
+  #pantalla-carga {
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--fondo);
+    z-index: 999;
+  }
+  .spinner {
+    width: 46px; height: 46px;
+    border: 5px solid var(--rosa-suave);
+    border-top-color: var(--rosa);
+    border-radius: 50%;
+    animation: girar 0.8s linear infinite;
+  }
+  @keyframes girar { to { transform: rotate(360deg); } }
+
+  /* ---------- Login ---------- */
+  #pantalla-login {
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  .login-decoracion { text-align: center; margin-bottom: 10px; font-size: 15px; letter-spacing: 4px; color: var(--rosa); opacity: 0.9; }
+  .login-card {
+    background: var(--crema);
+    border-radius: var(--radio);
+    box-shadow: var(--sombra);
+    padding: 40px 32px;
+    width: 100%; max-width: 380px;
+    text-align: center;
+  }
+  .login-card h1 { font-size: 26px; color: var(--rosa-oscuro); margin-bottom: 4px; }
+  .subtitulo { color: var(--texto-suave); margin-bottom: 24px; font-size: 14px; }
+  .login-tabs { display: flex; background: var(--rosa-suave); border-radius: 100px; padding: 4px; margin-bottom: 22px; }
+  .tab { flex: 1; border: none; background: none; padding: 10px; border-radius: 100px; cursor: pointer; font-weight: 700; font-size: 14px; color: var(--texto-suave); transition: background 0.2s, color 0.2s; }
+  .tab.activo { background: var(--rosa); color: white; }
+  #form-login { display: flex; flex-direction: column; gap: 12px; text-align: left; }
+  #form-login input {
+    padding: 13px 16px; border: 2px solid var(--rosa-suave); border-radius: var(--radio-chico);
+    font-size: 15px; outline: none; transition: border 0.2s; width: 100%;
+  }
+  #form-login input:focus { border-color: var(--rosa); }
+  .btn-principal {
+    background: var(--rosa); color: white; border: none;
+    padding: 14px; border-radius: var(--radio-chico); font-size: 15px; font-weight: 700;
+    cursor: pointer; transition: transform 0.15s, background 0.2s;
+  }
+  .btn-principal:hover { background: var(--rosa-oscuro); transform: translateY(-1px); }
+  .btn-secundario {
+    background: var(--rosa-suave); color: var(--rosa-oscuro); border: none;
+    padding: 14px; border-radius: var(--radio-chico); font-weight: 700; cursor: pointer;
+    font-size: 14px;
+  }
+  .error { color: #D6336C; font-size: 13px; min-height: 4px; }
+
+  /* ---------- App ---------- */
+  .navbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 24px; background: rgba(255,255,255,0.65); backdrop-filter: blur(8px);
+    position: sticky; top: 0; z-index: 80;
+  }
+  .logo { font-size: 19px; font-weight: 700; color: var(--rosa-oscuro); }
+  .nav-derecha { display: flex; align-items: center; gap: 12px; font-size: 13px; }
+  .badge-local { background: #FFE8A3; color: #8A6D00; padding: 5px 12px; border-radius: 100px; font-size: 12px; font-weight: 700; }
+  #usuario-email { color: var(--texto-suave); max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  main { max-width: 1100px; margin: 0 auto; padding: 28px 20px 120px; }
+
+  #capture-area {
+    background: linear-gradient(165deg, #FFF9FB, #FFE9EF);
+    border-radius: var(--radio);
+    padding: 34px 26px;
+  }
+  .titulo-horario { text-align: center; margin-bottom: 30px; }
+  .titulo-horario h2 { font-size: 30px; color: var(--rosa-oscuro); }
+  .titulo-horario p { color: var(--rosa); font-size: 14px; margin-top: 4px; letter-spacing: 2px; }
+
+  .dias-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 30px 18px;
+  }
+
+  .dia-card {
+    position: relative;
+    background: var(--crema);
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(232, 98, 140, 0.12);
+    padding: 26px 18px 18px;
+    margin-top: 12px;
+  }
+  .washi {
+    position: absolute;
+    top: -13px; left: 18px;
+    padding: 6px 16px;
+    border-radius: 2px;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--rosa-oscuro);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.10);
+    background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.4) 0 4px, transparent 4px 9px);
+  }
+  .dia-card:nth-child(odd) .washi { transform: rotate(-2.5deg); }
+  .dia-card:nth-child(even) .washi { transform: rotate(2deg); }
+
+  .dia-header { display: flex; justify-content: flex-end; margin-bottom: 12px; min-height: 26px; }
+  .btn-agregar {
+    background: var(--rosa-suave); color: var(--rosa-oscuro); border: none;
+    padding: 6px 14px; border-radius: 100px; font-weight: 700; font-size: 12px; cursor: pointer;
+    font-family: 'Quicksand', sans-serif;
+  }
+  .btn-agregar:hover { background: var(--rosa); color: white; }
+
+  .entradas-lista { display: flex; flex-direction: column; gap: 8px; min-height: 20px; }
+  .entrada {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--fondo); border-radius: var(--radio-chico); padding: 10px 12px;
+  }
+  .entrada-icono { font-size: 19px; }
+  .entrada-info { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .entrada-hora { font-size: 11px; color: var(--rosa-oscuro); font-weight: 700; letter-spacing: 0.3px; }
+  .entrada-nota { font-size: 14px; overflow-wrap: break-word; }
+  .btn-eliminar { background: none; border: none; color: var(--texto-suave); cursor: pointer; font-size: 13px; padding: 4px 6px; border-radius: 8px; }
+  .btn-eliminar:hover { color: #D6336C; background: rgba(214,51,108,0.08); }
+  .sin-entradas { color: var(--texto-suave); font-size: 13px; text-align: center; padding: 10px 0; }
+
+  .btn-flotante {
+    position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+    background: var(--rosa-oscuro); color: white; border: none;
+    padding: 15px 30px; border-radius: 100px; font-weight: 700; font-size: 15px;
+    box-shadow: var(--sombra); cursor: pointer; z-index: 90;
+    transition: transform 0.15s;
+  }
+  .btn-flotante:hover { transform: translateX(-50%) translateY(-2px); }
+
+  .toast {
+    position: fixed; top: 78px; left: 50%; transform: translateX(-50%);
+    background: var(--texto); color: white; padding: 10px 22px; border-radius: 100px; font-size: 13px; z-index: 200;
+  }
+
+  /* ---------- Modal ---------- */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(74,59,66,0.42);
+    display: flex; align-items: center; justify-content: center; z-index: 300; padding: 20px;
+  }
+  .modal {
+    background: var(--crema); border-radius: var(--radio); padding: 26px; width: 100%; max-width: 400px;
+    max-height: 88vh; overflow-y: auto;
+  }
+  .modal h3 { color: var(--rosa-oscuro); margin-bottom: 14px; font-size: 19px; }
+  .modal label { display: block; font-size: 12px; font-weight: 700; margin: 12px 0 6px; color: var(--texto-suave); text-transform: uppercase; letter-spacing: 0.4px; }
+  .modal input[type="text"], .modal input[type="time"] {
+    width: 100%; padding: 12px; border: 2px solid var(--rosa-suave); border-radius: var(--radio-chico);
+    font-size: 14px;
+  }
+  .iconos-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .icono-opcion {
+    font-size: 21px; padding: 9px; border-radius: 12px; border: 2px solid var(--rosa-suave);
+    background: white; cursor: pointer; text-align: center; transition: transform 0.1s;
+  }
+  .icono-opcion:hover { transform: scale(1.08); }
+  .icono-opcion.seleccionado { background: var(--rosa); border-color: var(--rosa); }
+  .modal-botones { display: flex; gap: 10px; margin-top: 22px; }
+  .modal-botones button, .modal-botones a { flex: 1; text-align: center; text-decoration: none; }
+
+  .modal-imagen-contenido { max-width: 440px; text-align: center; }
+  #imagen-generada { width: 100%; border-radius: 12px; margin: 14px 0; display: block; }
+
+  body.exportando .solo-editar { display: none !important; }
+
+  @media (max-width: 640px) {
+    .dias-grid { grid-template-columns: 1fr; }
+    .login-card { padding: 32px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<!--
+  ============================================================
+  MI HORARIO ✨ — archivo único (HTML + CSS + JS)
+  ============================================================
+  Este archivo tiene TODO adentro: el diseño, la lógica y la
+  conexión con Firebase (login + guardado en la nube).
+
+  Para activar el login y el guardado en la nube:
+  1. Buscá más abajo el bloque que dice "firebaseConfig"
+     (podés usar Ctrl+F).
+  2. Reemplazá esos valores de ejemplo por los de TU proyecto
+     de Firebase (las instrucciones están en el chat de Claude).
+
+  Hasta que lo configures, la app funciona sola en "modo local":
+  guarda los datos en este mismo navegador, sin necesidad de login.
+  ============================================================
+-->
+
+<div id="pantalla-carga">
+  <div class="spinner"></div>
+</div>
+
+<div id="pantalla-login" class="oculto">
+  <div>
+    <p class="login-decoracion">✿ ⋆ ✩ ⋆ ✿</p>
+    <div class="login-card">
+      <h1>Mi Horario</h1>
+      <p class="subtitulo">Organizá tu semana con estilo</p>
+      <div class="login-tabs">
+        <button type="button" id="tab-login" class="tab activo">Iniciar sesión</button>
+        <button type="button" id="tab-registro" class="tab">Crear cuenta</button>
+      </div>
+      <form id="form-login">
+        <input type="email" id="login-email" placeholder="Tu email" autocomplete="email" required>
+        <input type="password" id="login-password" placeholder="Tu contraseña" autocomplete="current-password" required minlength="6">
+        <p id="login-error" class="error oculto"></p>
+        <button type="submit" id="btn-login-submit" class="btn-principal">Iniciar sesión</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div id="pantalla-app" class="oculto">
+  <nav class="navbar">
+    <span class="logo">✨ Mi Horario</span>
+    <div class="nav-derecha">
+      <span id="banner-local" class="badge-local oculto">Modo local</span>
+      <span id="usuario-email"></span>
+      <button id="btn-logout" class="btn-secundario oculto" type="button">Cerrar sesión</button>
+    </div>
+  </nav>
+
+  <div id="mensaje-guardado" class="toast oculto">Guardado ✓</div>
+
+  <main>
+    <div id="capture-area">
+      <div class="titulo-horario">
+        <h2>Mi Semana</h2>
+        <p>✿ ⋆ ﾟ✩ ⋆ ﾟ✿</p>
+      </div>
+      <div id="dias-container" class="dias-grid"></div>
+    </div>
+  </main>
+
+  <button id="btn-generar-imagen" class="btn-flotante" type="button">📸 Generar imagen</button>
+</div>
+
+<div id="modal-agregar" class="modal-overlay oculto">
+  <div class="modal">
+    <h3 id="modal-titulo">Agregar actividad</h3>
+    <label for="input-hora-inicio">Hora de inicio</label>
+    <input type="time" id="input-hora-inicio">
+    <label for="input-hora-fin">Hora de fin (opcional)</label>
+    <input type="time" id="input-hora-fin">
+    <label for="input-nota">Nota</label>
+    <input type="text" id="input-nota" placeholder="Ej: Reunión con el equipo" maxlength="60">
+    <label>Ícono</label>
+    <div id="selector-iconos" class="iconos-grid"></div>
+    <div class="modal-botones">
+      <button type="button" id="btn-cancelar-modal" class="btn-secundario">Cancelar</button>
+      <button type="button" id="btn-guardar-entrada" class="btn-principal">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-imagen" class="modal-overlay oculto">
+  <div class="modal modal-imagen-contenido">
+    <h3>¡Tu horario está listo! 🎉</h3>
+    <img id="imagen-generada" alt="Imagen generada de tu horario semanal">
+    <div class="modal-botones">
+      <button type="button" id="btn-cerrar-imagen" class="btn-secundario">Cerrar</button>
+      <a id="btn-descargar" class="btn-principal" download="mi-horario.png">Descargar</a>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  // ============================================================
+  // CONFIGURACIÓN DE FIREBASE — PEGÁ ACÁ TUS DATOS
+  // ============================================================
+  // Reemplazá estos 6 valores por los de tu proyecto de Firebase.
+  // Los encontrás en: Configuración del proyecto > Tus apps > SDK de Firebase
+  // Mientras digan "TU_..." la app va a funcionar en modo local.
+  const firebaseConfig = {
+    apiKey: "TU_API_KEY_AQUI",
+    authDomain: "TU_PROYECTO.firebaseapp.com",
+    projectId: "TU_PROYECTO",
+    storageBucket: "TU_PROYECTO.appspot.com",
+    messagingSenderId: "TU_SENDER_ID",
+    appId: "TU_APP_ID"
+  };
+  // ============================================================
+
+  const DIAS = [
+    { key: 'domingo', nombre: 'Domingo' },
+    { key: 'lunes', nombre: 'Lunes' },
+    { key: 'martes', nombre: 'Martes' },
+    { key: 'miercoles', nombre: 'Miércoles' },
+    { key: 'jueves', nombre: 'Jueves' },
+    { key: 'viernes', nombre: 'Viernes' },
+    { key: 'sabado', nombre: 'Sábado' }
+  ];
+
+  const ICONOS = ['📚', '💼', '🏋️', '🍽️', '😴', '🎉', '🛒', '🧹', '❤️', '📌'];
+
+  let horario = {};
+  DIAS.forEach(d => horario[d.key] = []);
+
+  let diaActual = null;
+  let iconoSeleccionado = ICONOS[0];
+  let auth = null;
+  let db = null;
+  let authFns = null;
+  let fsFns = null;
+  let usuarioActual = null;
+  let modoLocal = true;
+  let modoFormulario = 'login';
+
+  const $ = (sel) => document.querySelector(sel);
+
+  function generarId() {
+    return (crypto.randomUUID ? crypto.randomUUID() : 'id-' + Date.now() + '-' + Math.random().toString(16).slice(2));
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // ---------- RENDER ----------
+  function renderizarHorario() {
+    const cont = $('#dias-container');
+    cont.innerHTML = DIAS.map(dia => {
+      const entradas = [...(horario[dia.key] || [])].sort((a, b) => (a.hora || '').localeCompare(b.hora || ''));
+      const html = entradas.length ? entradas.map(e => `
+        <div class="entrada">
+          <span class="entrada-icono">${e.icono}</span>
+          <div class="entrada-info">
+            <span class="entrada-hora">${e.hora}${e.horaFin ? ' – ' + e.horaFin : ''}</span>
+            <span class="entrada-nota">${escapeHtml(e.nota)}</span>
+          </div>
+          <button class="btn-eliminar solo-editar" data-dia="${dia.key}" data-id="${e.id}" title="Eliminar" type="button">✕</button>
+        </div>
+      `).join('') : '<p class="sin-entradas">Sin planes todavía ✿</p>';
+
+      return `
+        <div class="dia-card">
+          <div class="washi">${dia.nombre}</div>
+          <div class="dia-header">
+            <button class="btn-agregar solo-editar" data-dia="${dia.key}" type="button">+ Agregar</button>
+          </div>
+          <div class="entradas-lista">${html}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // ---------- EVENTOS DELEGADOS EN LOS DÍAS ----------
+  $('#dias-container').addEventListener('click', (e) => {
+    const btnAgregar = e.target.closest('.btn-agregar');
+    if (btnAgregar) { abrirModal(btnAgregar.dataset.dia); return; }
+    const btnEliminar = e.target.closest('.btn-eliminar');
+    if (btnEliminar) { eliminarEntrada(btnEliminar.dataset.dia, btnEliminar.dataset.id); return; }
+  });
+
+  // ---------- MODAL: AGREGAR ACTIVIDAD ----------
+  function construirSelectorIconos() {
+    const cont = $('#selector-iconos');
+    cont.innerHTML = ICONOS.map(ic =>
+      `<div class="icono-opcion ${ic === iconoSeleccionado ? 'seleccionado' : ''}" data-icono="${ic}">${ic}</div>`
+    ).join('');
+  }
+  $('#selector-iconos').addEventListener('click', (e) => {
+    const op = e.target.closest('.icono-opcion');
+    if (!op) return;
+    iconoSeleccionado = op.dataset.icono;
+    construirSelectorIconos();
+  });
+
+  function abrirModal(dia) {
+    diaActual = dia;
+    const nombreDia = DIAS.find(d => d.key === dia).nombre;
+    $('#modal-titulo').textContent = 'Agregar a ' + nombreDia;
+    $('#input-hora-inicio').value = '';
+    $('#input-hora-fin').value = '';
+    $('#input-nota').value = '';
+    iconoSeleccionado = ICONOS[0];
+    construirSelectorIconos();
+    $('#modal-agregar').classList.remove('oculto');
+    $('#input-hora-inicio').focus();
+  }
+  function cerrarModal() { $('#modal-agregar').classList.add('oculto'); }
+  $('#btn-cancelar-modal').addEventListener('click', cerrarModal);
+
+  $('#btn-guardar-entrada').addEventListener('click', () => {
+    const hora = $('#input-hora-inicio').value;
+    const horaFin = $('#input-hora-fin').value;
+    const nota = $('#input-nota').value.trim();
+    if (!hora || !nota) {
+      alert('Falta la hora o la nota. Completá los dos campos para guardar. ✏️');
+      return;
+    }
+    horario[diaActual].push({ id: generarId(), hora, horaFin, nota, icono: iconoSeleccionado });
+    renderizarHorario();
+    cerrarModal();
+    guardarDatos();
+  });
+
+  function eliminarEntrada(dia, id) {
+    horario[dia] = (horario[dia] || []).filter(e => e.id !== id);
+    renderizarHorario();
+    guardarDatos();
+  }
+
+  // ---------- GUARDADO (local o nube) ----------
+  function mostrarToast(msg) {
+    const t = $('#mensaje-guardado');
+    t.textContent = msg;
+    t.classList.remove('oculto');
+    clearTimeout(mostrarToast._t);
+    mostrarToast._t = setTimeout(() => t.classList.add('oculto'), 1600);
+  }
+
+  async function guardarDatos() {
+    if (modoLocal) {
+      localStorage.setItem('mi-horario-datos', JSON.stringify(horario));
+      mostrarToast('Guardado ✓');
+      return;
+    }
+    if (usuarioActual && db && fsFns) {
+      try {
+        await fsFns.setDoc(fsFns.doc(db, 'horarios', usuarioActual.uid), { dias: horario });
+        mostrarToast('Guardado en la nube ✓');
+      } catch (err) {
+        console.error(err);
+        mostrarToast('No se pudo guardar 😕');
+      }
+    }
+  }
+
+  function cargarLocal() {
+    const raw = localStorage.getItem('mi-horario-datos');
+    if (raw) {
+      try { horario = { ...horario, ...JSON.parse(raw) }; } catch (e) { /* datos corruptos, se ignoran */ }
+    }
+  }
+
+  async function cargarNube(uid) {
+    try {
+      const snap = await fsFns.getDoc(fsFns.doc(db, 'horarios', uid));
+      if (snap.exists() && snap.data().dias) {
+        horario = { ...horario, ...snap.data().dias };
+      }
+    } catch (err) {
+      console.error(err);
+    }
+    renderizarHorario();
+  }
+
+  // ---------- GENERAR IMAGEN ----------
+  $('#btn-generar-imagen').addEventListener('click', async () => {
+    const area = $('#capture-area');
+    document.body.classList.add('exportando');
+    await new Promise(r => setTimeout(r, 50)); // deja que el CSS se aplique antes de capturar
+    try {
+      const canvas = await html2canvas(area, { backgroundColor: '#FFF7F9', scale: 2, useCORS: true });
+      const dataUrl = canvas.toDataURL('image/png');
+      $('#imagen-generada').src = dataUrl;
+      $('#btn-descargar').href = dataUrl;
+      $('#modal-imagen').classList.remove('oculto');
+    } catch (err) {
+      console.error(err);
+      alert('No se pudo generar la imagen. Probá de nuevo. 😕');
+    } finally {
+      document.body.classList.remove('exportando');
+    }
+  });
+  $('#btn-cerrar-imagen').addEventListener('click', () => $('#modal-imagen').classList.add('oculto'));
+
+  // ---------- LOGIN: pestañas y formulario ----------
+  $('#tab-login').addEventListener('click', () => cambiarTab('login'));
+  $('#tab-registro').addEventListener('click', () => cambiarTab('registro'));
+
+  function cambiarTab(modo) {
+    modoFormulario = modo;
+    $('#tab-login').classList.toggle('activo', modo === 'login');
+    $('#tab-registro').classList.toggle('activo', modo === 'registro');
+    $('#btn-login-submit').textContent = modo === 'login' ? 'Iniciar sesión' : 'Crear cuenta';
+    $('#login-error').classList.add('oculto');
+  }
+
+  $('#form-login').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!authFns || !auth) return;
+    const email = $('#login-email').value.trim();
+    const password = $('#login-password').value;
+    $('#login-error').classList.add('oculto');
+    $('#btn-login-submit').disabled = true;
+    try {
+      if (modoFormulario === 'login') {
+        await authFns.signInWithEmailAndPassword(auth, email, password);
+      } else {
+        await authFns.createUserWithEmailAndPassword(auth, email, password);
+      }
+    } catch (err) {
+      $('#login-error').textContent = traducirErrorFirebase(err.code);
+      $('#login-error').classList.remove('oculto');
+    } finally {
+      $('#btn-login-submit').disabled = false;
+    }
+  });
+
+  function traducirErrorFirebase(code) {
+    const errores = {
+      'auth/invalid-email': 'Ese email no es válido.',
+      'auth/user-not-found': 'No existe una cuenta con ese email.',
+      'auth/wrong-password': 'La contraseña es incorrecta.',
+      'auth/email-already-in-use': 'Ya existe una cuenta con ese email.',
+      'auth/weak-password': 'La contraseña debe tener al menos 6 caracteres.',
+      'auth/invalid-credential': 'Email o contraseña incorrectos.',
+      'auth/missing-password': 'Ingresá una contraseña.',
+      'auth/too-many-requests': 'Demasiados intentos. Esperá un momento y probá de nuevo.'
+    };
+    return errores[code] || 'Ocurrió un error. Probá de nuevo.';
+  }
+
+  $('#btn-logout').addEventListener('click', () => {
+    if (authFns && auth) authFns.signOut(auth);
+  });
+
+  // ---------- CAMBIO ENTRE PANTALLAS ----------
+  function mostrarPantalla(id) {
+    ['#pantalla-carga', '#pantalla-login', '#pantalla-app'].forEach(s => $(s).classList.add('oculto'));
+    $(id).classList.remove('oculto');
+  }
+
+  // ---------- INICIO DE LA APP ----------
+  async function iniciar() {
+    construirSelectorIconos();
+    const estaConfigurado = firebaseConfig.apiKey && firebaseConfig.apiKey !== 'TU_API_KEY_AQUI';
+
+    if (estaConfigurado) {
+      try {
+        const v = '12.17.0';
+        const [{ initializeApp }, authModule, fsModule] = await Promise.all([
+          import(`https://www.gstatic.com/firebasejs/${v}/firebase-app.js`),
+          import(`https://www.gstatic.com/firebasejs/${v}/firebase-auth.js`),
+          import(`https://www.gstatic.com/firebasejs/${v}/firebase-firestore.js`)
+        ]);
+        authFns = authModule;
+        fsFns = fsModule;
+        const app = initializeApp(firebaseConfig);
+        auth = authFns.getAuth(app);
+        db = fsFns.getFirestore(app);
+        modoLocal = false;
+
+        authFns.onAuthStateChanged(auth, async (user) => {
+          if (user) {
+            usuarioActual = user;
+            $('#usuario-email').textContent = user.email;
+            $('#btn-logout').classList.remove('oculto');
+            $('#banner-local').classList.add('oculto');
+            mostrarPantalla('#pantalla-app');
+            await cargarNube(user.uid);
+          } else {
+            usuarioActual = null;
+            mostrarPantalla('#pantalla-login');
+          }
+        });
+        return;
+      } catch (err) {
+        console.warn('No se pudo conectar con Firebase, se activa el modo local.', err);
+        modoLocal = true;
+      }
+    }
+
+    // Modo local: sin Firebase configurado (o si falló la conexión)
+    modoLocal = true;
+    cargarLocal();
+    renderizarHorario();
+    $('#banner-local').classList.remove('oculto');
+    $('#btn-logout').classList.add('oculto');
+    mostrarPantalla('#pantalla-app');
+  }
+
+  iniciar();
+</script>
+
+</body>
+</html>

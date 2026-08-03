@@ -557,7 +557,19 @@ function mostrarPantalla(id) {
 // INSTALAR WIDGET Y TUTORIAL
 // ==========================
 
-$("#btn-instalar-widget")?.addEventListener("click", instalarWidget);
+// 1. Función segura para crear un token (funciona en cualquier dispositivo)
+function generarToken() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return Date.now().toString(36) + Math.random().toString(36).substring(2);
+}
+
+// 2. Evento del botón principal
+const btnInstalar = document.querySelector("#btn-instalar-widget");
+if (btnInstalar) {
+  btnInstalar.addEventListener("click", instalarWidget);
+}
 
 async function instalarWidget() {
   if (!usuarioActual) {
@@ -566,58 +578,65 @@ async function instalarWidget() {
   }
 
   try {
-    // 1. Creamos el token único
-    const token = crypto.randomUUID();
+    const token = generarToken();
+    const urlNetlify = `https://friendly-melba-0783ef.netlify.app/.netlify/functions/horario?token=${token}`;
     
-    // 2. Guardamos el token en Firebase vinculado a tu usuario
+    // Mostramos el modal y la URL INMEDIATAMENTE para que no se bloquee
+    const inputUrl = document.querySelector("#widget-url");
+    if (inputUrl) inputUrl.value = urlNetlify;
+    
+    const modalWidget = document.querySelector("#modal-widget");
+    if (modalWidget) {
+      modalWidget.classList.remove("oculto");
+    } else {
+      alert("Error: No se encontró el HTML del modal. Revisa tu index.html");
+      return;
+    }
+
+    // Ahora guardamos el token en Firebase
     const widgetRef = doc(db, "widgets", token);
     await setDoc(widgetRef, {
       uid: usuarioActual.uid,
       activo: true,
-      creado: serverTimestamp()
+      creado: new Date().toISOString() // Usamos fecha estándar para evitar errores de importación
     });
-    
-    // 3. Armamos automáticamente la URL
-    const urlNetlify = `https://friendly-melba-0783ef.netlify.app/.netlify/functions/horario?token=${token}`;
-    
-    // 4. Copiamos la URL al portapapeles
-    navigator.clipboard.writeText(urlNetlify);
-    
-    // 5. Llenamos el input del modal con la URL y lo mostramos
-    const inputUrl = $("#widget-url");
-    if (inputUrl) inputUrl.value = urlNetlify;
-    
-    $("#modal-widget")?.classList.remove("oculto");
 
   } catch (e) {
-    console.error("Error detallado:", e);
-    alert("Error al crear el widget. Revisá la consola.");
+    console.error("Error al crear widget:", e);
+    alert("Error guardando el token. Revisa la consola o las Reglas de Firestore.");
   }
 }
 
 // ------------------------------------
 // Eventos del Modal del Widget
 // ------------------------------------
-$("#btn-cerrar-widget")?.addEventListener("click", () => {
-  $("#modal-widget")?.classList.add("oculto");
-});
+const btnCerrarWidget = document.querySelector("#btn-cerrar-widget");
+if (btnCerrarWidget) {
+  btnCerrarWidget.addEventListener("click", () => {
+    document.querySelector("#modal-widget").classList.add("oculto");
+  });
+}
 
-$("#btn-copiar-url")?.addEventListener("click", () => {
-  const inputUrl = $("#widget-url");
-  if (inputUrl && inputUrl.value) {
-    navigator.clipboard.writeText(inputUrl.value);
-    
-    // Efecto visual dinámico en el botón al copiar
-    const btn = $("#btn-copiar-url");
-    const textoOriginal = btn.textContent;
-    btn.textContent = "¡Copiado!";
-    btn.style.background = "#E87A90";
-    btn.style.color = "white";
-    
-    setTimeout(() => {
-      btn.textContent = textoOriginal;
-      btn.style.background = "";
-      btn.style.color = "";
-    }, 2000);
-  }
-});
+const btnCopiarUrl = document.querySelector("#btn-copiar-url");
+if (btnCopiarUrl) {
+  btnCopiarUrl.addEventListener("click", () => {
+    const inputUrl = document.querySelector("#widget-url");
+    if (inputUrl && inputUrl.value) {
+      // Intenta copiar al portapapeles de forma segura
+      navigator.clipboard.writeText(inputUrl.value).then(() => {
+        const textoOriginal = btnCopiarUrl.textContent;
+        btnCopiarUrl.textContent = "¡Copiado!";
+        btnCopiarUrl.style.background = "#E87A90";
+        btnCopiarUrl.style.color = "white";
+        
+        setTimeout(() => {
+          btnCopiarUrl.textContent = textoOriginal;
+          btnCopiarUrl.style.background = "";
+          btnCopiarUrl.style.color = "";
+        }, 2000);
+      }).catch(err => {
+        alert("Tu navegador no permite copiar automáticamente. Por favor, selecciona el enlace y cópialo manualmente.");
+      });
+    }
+  });
+}

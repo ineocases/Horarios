@@ -214,9 +214,10 @@ function inicializarFirebaseSeguro() {
         mostrarPantalla('#pantalla-login');
       }
     });
-  } catch (error) {
-    mostrarPantalla('#pantalla-login');
-  }
+} catch (error) {
+  console.error("Error completo de Firebase:", error);
+  // Muestra el mensaje real en pantalla para saber qué falló
+  elementoDeError.textContent = "Error: " + error.message; 
 }
 
 // Autenticación

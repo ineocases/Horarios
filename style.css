@@ -243,3 +243,55 @@ body.exportando .solo-editar { display: none !important; }
   border-radius: 12px; 
   white-space: nowrap; 
 }
+/* Bloqueo para obligar a usar la pantalla en Horizontal */
+#aviso-orientacion {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: var(--fondo-general);
+  z-index: 99999;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 30px;
+}
+#aviso-orientacion p {
+  color: var(--rosa-texto);
+  font-size: 18px;
+  line-height: 1.5;
+  margin-top: 15px;
+}
+
+@media screen and (orientation: portrait) and (max-width: 900px) {
+  #aviso-orientacion { display: flex !important; }
+  #pantalla-app, #pantalla-login { display: none !important; }
+}
+
+/* Paleta de colores para el modal */
+.colores-grid {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 6px;
+}
+.color-opcion {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform 0.2s, border-color 0.2s;
+}
+.color-opcion:hover, .color-opcion.seleccionado {
+  transform: scale(1.15);
+  border-color: var(--rosa-texto);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.contenedor-btn-descarga {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}

@@ -12,22 +12,23 @@ const firebaseConfig = {
   measurementId: "G-0VGK0HWR4B"
 };
 
-let columnas = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-let tareas = [];
+// Columnas (Días) y Filas (Horarios o Secciones)
+let columnas = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
+let filas = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00'];
+let tareas = []; // { id, col, row, nota, icono }
 
 const ICONOS = ['🌸', '💼', '📚', '☕', '🏋️', '✨', '💻', '🛒', '❤️', '📌'];
-let colSeleccionada = null;
+let colSeleccionada = null, rowSeleccionada = null;
 let iconoSeleccionado = ICONOS[0];
 
 let auth = null, db = null, usuarioActual = null, modoFormulario = 'login';
 const $ = (sel) => document.querySelector(sel);
 
-// Renderizar la interfaz inmediatamente para que nunca aparezca en blanco
 document.addEventListener('DOMContentLoaded', () => {
-  renderizarPlanner();
+  renderizarTabla();
 });
 
-// Inicializar Firebase de forma segura
+// Inicializar Firebase
 try {
   const app = initializeApp(firebaseConfig);
   auth = getAuth(app);
@@ -46,10 +47,10 @@ try {
     }
   });
 } catch (error) {
-  console.warn("Aviso de Firebase (Modo local activo):", error);
+  console.warn("Modo local activo:", error);
   if ($('#banner-error')) $('#banner-error').classList.remove('oculto');
   mostrarPantalla('#pantalla-app'); 
-  renderizarPlanner();
+  renderizarTabla();
 }
 
 // Autenticación
@@ -95,10 +96,10 @@ $('#btn-logout')?.addEventListener('click', () => {
   if (auth) signOut(auth);
 });
 
-// Configurar Días / Columnas
+// Configurar Filas y Columnas de la Planilla
 $('#btn-abrir-config')?.addEventListener('click', () => {
-  const inputCols = $('#input-cols');
-  if (inputCols) inputCols.value = columnas.join(', ');
+  if ($('#input-cols')) $('#input-cols').value = columnas.join(', ');
+  if ($('#input-rows')) $('#input-rows').value = filas.join(', ');
   $('#modal-config')?.classList.remove('oculto');
 });
 
@@ -107,68 +108,68 @@ $('#btn-cancelar-config')?.addEventListener('click', () => {
 });
 
 $('#btn-guardar-config')?.addEventListener('click', () => {
-  const inputCols = $('#input-cols');
-  if (!inputCols) return;
-  const nuevas = inputCols.value.split(',').map(s => s.trim()).filter(Boolean);
-  if (nuevas.length === 0) {
-    alert("Agrega al menos un día.");
+  const nuevasCols = $('#input-cols')?.value.split(',').map(s => s.trim()).filter(Boolean);
+  const nuevasFilas = $('#input-rows')?.value.split(',').map(s => s.trim()).filter(Boolean);
+  
+  if (!nuevasCols || nuevasCols.length === 0 || !nuevasFilas || nuevasFilas.length === 0) {
+    alert("Debes tener al menos 1 columna y 1 fila.");
     return;
   }
-  columnas = nuevas;
-  tareas = tareas.filter(t => columnas.includes(t.col));
+
+  columnas = nuevasCols;
+  filas = nuevasFilas;
+  tareas = tareas.filter(t => columnas.includes(t.col) && filas.includes(t.row));
+  
   $('#modal-config')?.classList.add('oculto');
-  renderizarPlanner();
+  renderizarTabla();
   guardarBaseDeDatos();
 });
 
-// Renderizar el Planner Estético por Tarjetas
-function renderizarPlanner() {
-  const grid = $('#planner-grid');
-  if (!grid) return;
+// Renderizar la Tabla / Planilla Estética
+function renderizarTabla() {
+  const thead = $('#horario-thead');
+  if (!thead) return;
 
-  grid.innerHTML = columnas.map(col => {
-    const tareasCol = tareas.filter(t => t.col === col);
-    
-    const contenidoTareas = tareasCol.length > 0 ? tareasCol.map(t => `
-      <div class="bloque-tarea">
-        <div class="tarea-info-izq">
-          <span class="tarea-icono-box">${t.icono}</span>
-          <div class="tarea-detalles">
-            ${t.hora ? `<span class="tarea-hora">${t.hora}</span>` : ''}
-            <span class="tarea-texto">${t.nota}</span>
+  thead.innerHTML = `<tr>
+    <th>Horario</th>
+    ${columnas.map(col => `<th>${col}</th>`).join('')}
+  </tr>`;
+
+  const tbody = $('#horario-tbody');
+  if (!tbody) return;
+
+  tbody.innerHTML = filas.map(fila => `
+    <tr>
+      <td>${fila}</td>
+      ${columnas.map(col => {
+        const tareasCelda = tareas.filter(t => t.col === col && t.row === fila);
+        const html = tareasCelda.map(t => `
+          <div class="tarea-bloque">
+            <div class="tarea-info">
+              <span>${t.icono}</span>
+              <span class="tarea-texto">${t.nota}</span>
+            </div>
+            <button type="button" class="btn-eliminar-tarea solo-editar" data-id="${t.id}">✕</button>
           </div>
-        </div>
-        <button type="button" class="btn-eliminar-tarea solo-editar" data-id="${t.id}">✕</button>
-      </div>
-    `).join('') : `<div class="sin-planes">Sin planes todavía 🌸</div>`;
-
-    return `
-      <div class="dia-tarjeta" data-col="${col}">
-        <div class="dia-header">
-          <span>${col}</span>
-          <button type="button" class="btn-agregar-en-dia solo-editar" data-col="${col}" title="Añadir">+</button>
-        </div>
-        <div class="dia-cuerpo">
-          ${contenidoTareas}
-        </div>
-      </div>
-    `;
-  }).join('');
+        `).join('');
+        return `<td data-col="${col}" data-row="${fila}"><div class="celda-contenido">${html}</div></td>`;
+      }).join('')}
+    </tr>
+  `).join('');
 }
 
-// Interacciones en el Planner (Agregar / Borrar)
-$('#planner-grid')?.addEventListener('click', (e) => {
+// Clics en la planilla (Agregar o borrar tarea)
+$('#horario-tbody')?.addEventListener('click', (e) => {
   const btnBorrar = e.target.closest('.btn-eliminar-tarea');
   if (btnBorrar) {
     tareas = tareas.filter(t => t.id !== btnBorrar.dataset.id);
-    renderizarPlanner();
+    renderizarTabla();
     guardarBaseDeDatos();
     return;
   }
-
-  const btnMas = e.target.closest('.btn-agregar-en-dia');
-  if (btnMas) {
-    abrirModalTarea(btnMas.dataset.col);
+  const celda = e.target.closest('td[data-col]');
+  if (celda && !document.body.classList.contains('exportando')) {
+    abrirModalTarea(celda.dataset.col, celda.dataset.row);
   }
 });
 
@@ -187,11 +188,10 @@ $('#selector-iconos')?.addEventListener('click', (e) => {
   }
 });
 
-function abrirModalTarea(col) {
-  colSeleccionada = col;
-  const titulo = $('#modal-titulo');
-  if (titulo) titulo.textContent = `Nuevo en ${col}`;
-  if ($('#input-hora')) $('#input-hora').value = '';
+function abrirModalTarea(col, row) {
+  colSeleccionada = col; 
+  rowSeleccionada = row;
+  if ($('#modal-titulo')) $('#modal-titulo').textContent = `${col} • ${row}`;
   if ($('#input-nota')) $('#input-nota').value = '';
   iconoSeleccionado = ICONOS[0];
   construirIconos();
@@ -205,10 +205,9 @@ $('#btn-cancelar-modal')?.addEventListener('click', () => {
 
 $('#btn-guardar-entrada')?.addEventListener('click', () => {
   const nota = $('#input-nota')?.value.trim();
-  const hora = $('#input-hora')?.value.trim();
   if (nota) {
-    tareas.push({ id: Date.now().toString(), col: colSeleccionada, hora, nota, icono: iconoSeleccionado });
-    renderizarPlanner();
+    tareas.push({ id: Date.now().toString(), col: colSeleccionada, row: rowSeleccionada, nota, icono: iconoSeleccionado });
+    renderizarTabla();
     guardarBaseDeDatos();
     $('#modal-agregar')?.classList.add('oculto');
   } else {
@@ -220,7 +219,7 @@ $('#btn-guardar-entrada')?.addEventListener('click', () => {
 async function guardarBaseDeDatos() {
   if (usuarioActual && db) {
     try {
-      await setDoc(doc(db, 'planner_estetico', usuarioActual.uid), { columnas, tareas });
+      await setDoc(doc(db, 'planilla_estetica', usuarioActual.uid), { columnas, filas, tareas });
       mostrarNotificacion('Guardado 💖');
     } catch (err) { console.error("Error al guardar:", err); }
   }
@@ -229,14 +228,15 @@ async function guardarBaseDeDatos() {
 async function cargarBaseDeDatos(uid) {
   if (!db) return;
   try {
-    const snap = await getDoc(doc(db, 'planner_estetico', uid));
+    const snap = await getDoc(doc(db, 'planilla_estetica', uid));
     if (snap.exists()) {
       const data = snap.data();
       if (data.columnas) columnas = data.columnas;
+      if (data.filas) filas = data.filas;
       if (data.tareas) tareas = data.tareas;
     }
   } catch (err) { console.error("Error al cargar:", err); }
-  renderizarPlanner();
+  renderizarTabla();
 }
 
 function mostrarNotificacion(msg) {

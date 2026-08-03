@@ -3,13 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Widget Datos</title>
+    <title>Mi Widget Visual</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #fff0f3 0% / 100%, #ffe3e6 100%);
+            margin: 0;
+            padding: 16px;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .widget-card {
+            background: white;
+            width: 100%;
+            max-width: 400px;
+            border-radius: 24px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(214, 51, 108, 0.15);
+            border: 2px solid #ffb6c1;
+        }
+        h2 {
+            color: #d6336c;
+            font-size: 18px;
+            margin-top: 0;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .estado-vacio {
+            text-align: center;
+            color: #888;
+            font-size: 14px;
+            padding: 20px 0;
+        }
+        .tarea-item {
+            background: #fff2f4;
+            border-left: 4px solid #ff4d6d;
+            padding: 10px 14px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+        }
+        .tarea-item span {
+            font-size: 16px;
+        }
+    </style>
 </head>
 <body>
-    <!-- Aquí vamos a inyectar el JSON puro para que el Atajo de iOS lo lea -->
-    <pre id="json-output">Cargando datos...</pre>
 
-    <!-- Cargamos el script del widget -->
+    <div class="widget-card">
+        <h2>✨ Tu Horario</h2>
+        <div id="contenedor-visual">
+            <div class="estado-vacio">Cargando diseño...</div>
+        </div>
+    </div>
+
     <script type="module" src="widget.js"></script>
 </body>
 </html>

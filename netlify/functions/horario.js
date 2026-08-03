@@ -17,7 +17,7 @@ export async function handler(event) {
         return {
             statusCode: 400,
             headers: { "Content-Type": "text/plain; charset=utf-8" },
-            body: "❌ Falta el token en la URL."
+            body: "Falta el token."
         };
     }
 
@@ -30,7 +30,7 @@ export async function handler(event) {
             return {
                 statusCode: 404,
                 headers: { "Content-Type": "text/plain; charset=utf-8" },
-                body: "❌ Token inválido o expirado."
+                body: "Token inválido."
             };
         }
 
@@ -40,7 +40,7 @@ export async function handler(event) {
             return {
                 statusCode: 404,
                 headers: { "Content-Type": "text/plain; charset=utf-8" },
-                body: "📅 No hay datos en tu planilla."
+                body: "Sin datos."
             };
         }
 
@@ -81,22 +81,15 @@ export async function handler(event) {
         const gruposHoy = agrupar(tareas.filter(t => t.col === hoyStr));
         const gruposManana = agrupar(tareas.filter(t => t.col === mananaStr));
 
-        function formatearBloque(etiqueta, nombreDia, grupos) {
-            let texto = `${etiqueta} (${nombreDia.toUpperCase()}):\n`;
-            if (grupos.length === 0) {
-                texto += `• ☕ Día libre\n`;
-            } else {
-                grupos.forEach(g => {
-                    const hora = g.start === g.end ? g.start : `${g.start} a ${g.end}`;
-                    texto += `• ${hora} - ${g.icono} ${g.nota}\n`;
-                });
-            }
-            return texto;
+        function formatearMinimalista(grupos) {
+            if (grupos.length === 0) return "☕ Libre";
+            return grupos.map(g => {
+                const hora = g.start === g.end ? g.start : `${g.start}-${g.end}`;
+                return `${hora} ${g.icono} ${g.nota}`;
+            }).join('\n');
         }
 
-        const resultadoFinal = formatearBloque("🔥 HOY", hoyStr, gruposHoy) + 
-                               "\n" + 
-                               formatearBloque("📅 MAÑANA", mananaStr, gruposManana);
+        const resultadoFinal = `Hoy:\n${formatearMinimalista(gruposHoy)}\n\nMañana:\n${formatearMinimalista(gruposManana)}`;
 
         return {
             statusCode: 200,
@@ -108,7 +101,7 @@ export async function handler(event) {
         return {
             statusCode: 500,
             headers: { "Content-Type": "text/plain; charset=utf-8" },
-            body: "⚠️ Error en el servidor: " + error.message
+            body: "Error en el servidor."
         };
     }
 }

@@ -568,7 +568,7 @@ async function instalarWidget(){
 
     try{
 
-        const widgetRef = doc(db,"widgets",usuarioActual.uid);
+        const widgetRef = doc(db, "widgets", token);
 
         const existente = await getDoc(widgetRef);
 
@@ -583,10 +583,10 @@ async function instalarWidget(){
             token = crypto.randomUUID();
 
             await setDoc(widgetRef,{
-                token,
-                activo:true,
-                creado:serverTimestamp()
-            });
+                uid: usuarioActual.uid,
+                activo: true,
+                creado: serverTimestamp()
+});
 
         }
 

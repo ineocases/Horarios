@@ -1,643 +1,121 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mi Horario Elegante ✨</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌸</text></svg>">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- Agregamos Playfair Display para el título elegante y mantenemos Quicksand para el texto -->
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,600&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    /* Paleta de colores basada en la imagen */
-    --fondo-sitio: #F9F7F5;
-    --beige-header: #F4EBE8;
-    --lineas-tabla: #EAD8D5;
-    --texto-oscuro: #5C4A47;
-    --texto-claro: #9A8481;
-    --rosa-acento: #E5B4B6;
-    --blanco: #FFFFFF;
-    
-    --sombra: 0 10px 40px rgba(92, 74, 71, 0.08);
-    --radio: 20px;
-    --radio-chico: 10px;
-  }
-
-  html { scroll-behavior: smooth; }
-
-  body {
-    font-family: 'Quicksand', sans-serif;
-    background-color: var(--fondo-sitio);
-    color: var(--texto-oscuro);
-    line-height: 1.4;
-    min-height: 100vh;
-  }
-
-  .oculto { display: none !important; }
-  button, input, a { font-family: inherit; }
-  :focus-visible { outline: 2px solid var(--rosa-acento); outline-offset: 2px; }
-
-  /* ---------- Pantalla de carga ---------- */
-  #pantalla-carga {
-    position: fixed; inset: 0;
-    display: flex; align-items: center; justify-content: center;
-    background: var(--fondo-sitio);
-    z-index: 999;
-  }
-  .spinner {
-    width: 46px; height: 46px;
-    border: 4px solid var(--beige-header);
-    border-top-color: var(--rosa-acento);
-    border-radius: 50%;
-    animation: girar 0.8s linear infinite;
-  }
-  @keyframes girar { to { transform: rotate(360deg); } }
-
-  /* ---------- Botones Generales ---------- */
-  .btn-principal {
-    background: var(--rosa-acento); color: white; border: none;
-    padding: 12px 24px; border-radius: var(--radio-chico); font-size: 15px; font-weight: 700;
-    cursor: pointer; transition: transform 0.15s, opacity 0.2s;
-  }
-  .btn-principal:hover { opacity: 0.9; transform: translateY(-1px); }
-  .btn-secundario {
-    background: var(--beige-header); color: var(--texto-oscuro); border: none;
-    padding: 12px 24px; border-radius: var(--radio-chico); font-weight: 700; cursor: pointer;
-    font-size: 14px; transition: background 0.2s;
-  }
-  .btn-secundario:hover { background: var(--lineas-tabla); }
-
-  /* ---------- Login ---------- */
-  #pantalla-login {
-    min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px;
-  }
-  .login-card {
-    background: var(--blanco); border-radius: var(--radio); box-shadow: var(--sombra);
-    padding: 40px 32px; width: 100%; max-width: 380px; text-align: center;
-  }
-  .login-card h1 { font-family: 'Playfair Display', serif; font-size: 28px; color: var(--texto-oscuro); margin-bottom: 8px; }
-  .subtitulo { color: var(--texto-claro); margin-bottom: 24px; font-size: 14px; }
-  .login-tabs { display: flex; background: var(--fondo-sitio); border-radius: 100px; padding: 4px; margin-bottom: 22px; }
-  .tab { flex: 1; border: none; background: none; padding: 10px; border-radius: 100px; cursor: pointer; font-weight: 700; font-size: 14px; color: var(--texto-claro); transition: all 0.2s; }
-  .tab.activo { background: var(--rosa-acento); color: white; }
-  #form-login { display: flex; flex-direction: column; gap: 14px; text-align: left; }
-  #form-login input {
-    padding: 14px 16px; border: 1px solid var(--lineas-tabla); border-radius: var(--radio-chico);
-    font-size: 15px; outline: none; transition: border 0.2s; background: var(--fondo-sitio);
-  }
-  #form-login input:focus { border-color: var(--rosa-acento); }
-  .error { color: #D6336C; font-size: 13px; min-height: 4px; }
-
-  /* ---------- App & Navbar ---------- */
-  .navbar {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 16px 24px; background: rgba(255,255,255,0.8); backdrop-filter: blur(8px);
-    position: sticky; top: 0; z-index: 80; border-bottom: 1px solid var(--lineas-tabla);
-  }
-  .logo { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 600; color: var(--texto-oscuro); }
-  .nav-derecha { display: flex; align-items: center; gap: 12px; font-size: 13px; }
-  .badge-local { background: #FDEEDC; color: #B37B3C; padding: 5px 12px; border-radius: 100px; font-size: 12px; font-weight: 700; }
-  #usuario-email { color: var(--texto-claro); max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-  main { max-width: 1000px; margin: 0 auto; padding: 40px 20px 120px; }
-
-  /* ---------- Diseño A4 (El Horario de la Imagen) ---------- */
-  #capture-area {
-    background: var(--blanco);
-    border: 3px solid var(--beige-header);
-    border-radius: 30px;
-    padding: 40px 30px;
-    position: relative;
-    box-shadow: var(--sombra);
-    /* Fondo con patrón sutil de cuadricula como en la imagen */
-    background-image: linear-gradient(var(--fondo-sitio) 1px, transparent 1px), linear-gradient(90deg, var(--fondo-sitio) 1px, transparent 1px);
-    background-size: 20px 20px;
-  }
-
-  .decoracion-clip {
-    position: absolute; top: 15px; left: 25px;
-    font-size: 45px; transform: rotate(-45deg); opacity: 0.8;
-  }
-  .decoracion-sparkle {
-    position: absolute; top: 35px; right: 40px;
-    font-size: 28px; opacity: 0.7;
-  }
-
-  .titulo-horario { text-align: center; margin-bottom: 40px; }
-  .titulo-pildora {
-    display: inline-block;
-    background: var(--beige-header);
-    color: var(--texto-oscuro);
-    font-family: 'Playfair Display', serif;
-    font-size: 26px;
-    font-weight: 600;
-    letter-spacing: 4px;
-    padding: 10px 50px;
-    border-radius: 50px;
-    text-transform: uppercase;
-  }
-
-  /* La Tabla */
-  .tabla-contenedor { overflow-x: auto; }
-  .tabla-horario {
-    width: 100%; border-collapse: collapse; background: var(--blanco);
-    border: 2px solid var(--beige-header); border-radius: 12px; overflow: hidden;
-  }
-  .tabla-horario th, .tabla-horario td {
-    border: 1px solid var(--lineas-tabla);
-    text-align: center;
-  }
-  .tabla-horario th {
-    background: var(--beige-header);
-    padding: 16px 10px;
-    font-size: 13px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--texto-oscuro);
-  }
-  .tabla-horario td:first-child {
-    background: var(--beige-header);
-    font-size: 13px; font-weight: 600;
-    width: 10%; padding: 0 15px;
-  }
-  .tabla-horario td:not(:first-child) {
-    width: 18%;
-    height: 70px;
-    vertical-align: top;
-    padding: 6px;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-  .tabla-horario td:not(:first-child):hover { background: #FFF9F9; }
-
-  .celda-contenido { display: flex; flex-direction: column; gap: 4px; height: 100%; justify-content: center; }
-  .tarea {
-    background: var(--fondo-sitio);
-    border: 1px solid var(--lineas-tabla);
-    color: var(--texto-oscuro);
-    padding: 6px 8px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 500;
-    display: flex; justify-content: space-between; align-items: center;
-    text-align: left;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.02);
-  }
-  .tarea-info { display: flex; align-items: center; gap: 6px; flex: 1; overflow: hidden; }
-  .tarea-texto { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  
-  .btn-eliminar {
-    background: none; border: none; color: var(--texto-claro); cursor: pointer; font-size: 11px;
-    padding: 4px; border-radius: 4px; display: flex; align-items: center; justify-content: center;
-  }
-  .btn-eliminar:hover { color: #D6336C; background: rgba(214,51,108,0.1); }
-
-  /* Elementos flotantes */
-  .btn-flotante {
-    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-    background: var(--texto-oscuro); color: white; border: none;
-    padding: 16px 36px; border-radius: 100px; font-weight: 700; font-size: 15px;
-    box-shadow: var(--sombra); cursor: pointer; z-index: 90; transition: transform 0.2s;
-  }
-  .btn-flotante:hover { transform: translateX(-50%) translateY(-3px); }
-
-  .toast {
-    position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
-    background: var(--texto-oscuro); color: white; padding: 10px 24px; border-radius: 100px; font-size: 13px; z-index: 200; font-weight: 600;
-  }
-
-  /* ---------- Modales ---------- */
-  .modal-overlay {
-    position: fixed; inset: 0; background: rgba(92, 74, 71, 0.5); backdrop-filter: blur(4px);
-    display: flex; align-items: center; justify-content: center; z-index: 300; padding: 20px;
-  }
-  .modal { background: var(--blanco); border-radius: var(--radio); padding: 32px; width: 100%; max-width: 400px; box-shadow: var(--sombra); }
-  .modal h3 { color: var(--texto-oscuro); margin-bottom: 20px; font-size: 20px; font-family: 'Playfair Display', serif; }
-  
-  .modal-campo { margin-bottom: 16px; }
-  .modal label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 8px; color: var(--texto-claro); text-transform: uppercase; letter-spacing: 0.5px; }
-  .modal input[type="text"] {
-    width: 100%; padding: 14px; border: 1px solid var(--lineas-tabla); border-radius: var(--radio-chico);
-    font-size: 14px; background: var(--fondo-sitio); outline: none; transition: border 0.2s;
-  }
-  .modal input[type="text"]:focus { border-color: var(--rosa-acento); }
-  
-  .iconos-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
-  .icono-opcion {
-    font-size: 22px; padding: 10px; border-radius: var(--radio-chico); border: 1px solid var(--lineas-tabla);
-    background: var(--blanco); cursor: pointer; text-align: center; transition: all 0.15s;
-  }
-  .icono-opcion:hover { transform: translateY(-2px); border-color: var(--rosa-acento); }
-  .icono-opcion.seleccionado { background: var(--beige-header); border-color: var(--rosa-acento); }
-  
-  .modal-botones { display: flex; gap: 12px; margin-top: 28px; }
-  .modal-botones button, .modal-botones a { flex: 1; text-align: center; text-decoration: none; }
-  .modal-imagen-contenido { max-width: 500px; text-align: center; }
-  #imagen-generada { width: 100%; border-radius: 12px; margin: 20px 0; display: block; border: 1px solid var(--lineas-tabla); }
-
-  body.exportando .solo-editar { display: none !important; }
-
-  @media (max-width: 768px) {
-    #capture-area { padding: 20px 10px; }
-    .tabla-horario th, .tabla-horario td { padding: 8px 4px; font-size: 11px; }
-    .titulo-pildora { font-size: 18px; padding: 8px 30px; }
-    .decoracion-clip { font-size: 30px; left: 10px; top: 10px; }
-    .decoracion-sparkle { font-size: 20px; right: 15px; top: 15px; }
-    .tarea { flex-direction: column; text-align: center; padding: 4px; }
-    .btn-eliminar { margin-top: 4px; width: 100%; background: rgba(214,51,108,0.05); }
-  }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi Horario Elegante ✨</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌸</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,600&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 
-<div id="pantalla-carga">
-  <div class="spinner"></div>
-</div>
-
-<div id="pantalla-login" class="oculto">
-  <div>
-    <div class="login-card">
-      <h1>Mi Horario</h1>
-      <p class="subtitulo">Organiza tu semana con elegancia</p>
-      <div class="login-tabs">
-        <button type="button" id="tab-login" class="tab activo">Iniciar sesión</button>
-        <button type="button" id="tab-registro" class="tab">Crear cuenta</button>
-      </div>
-      <form id="form-login">
-        <input type="email" id="login-email" placeholder="Correo electrónico" autocomplete="email" required>
-        <input type="password" id="login-password" placeholder="Contraseña" autocomplete="current-password" required minlength="6">
-        <p id="login-error" class="error oculto"></p>
-        <button type="submit" id="btn-login-submit" class="btn-principal">Ingresar</button>
-      </form>
-    </div>
+  <!-- Pantalla de carga -->
+  <div id="pantalla-carga">
+    <div class="spinner"></div>
   </div>
-</div>
 
-<div id="pantalla-app" class="oculto">
-  <nav class="navbar">
-    <span class="logo">🌸 Horario</span>
-    <div class="nav-derecha">
-      <span id="banner-local" class="badge-local oculto">Modo sin conexión</span>
-      <span id="usuario-email"></span>
-      <button id="btn-logout" class="btn-secundario oculto" type="button">Salir</button>
-    </div>
-  </nav>
-
-  <div id="mensaje-guardado" class="toast oculto">Guardado correctamente ✓</div>
-
-  <main>
-    <div id="capture-area">
-      <div class="decoracion-clip">📎</div>
-      <div class="decoracion-sparkle">✨</div>
-      
-      <div class="titulo-horario">
-        <div class="titulo-pildora">HORARIO</div>
-      </div>
-      
-      <div class="tabla-contenedor">
-        <table class="tabla-horario">
-          <thead>
-            <tr>
-              <th>Horas</th>
-              <th>Lunes</th>
-              <th>Martes</th>
-              <th>Miércoles</th>
-              <th>Jueves</th>
-              <th>Viernes</th>
-            </tr>
-          </thead>
-          <tbody id="horario-tbody">
-            <!-- Renderizado por JS -->
-          </tbody>
-        </table>
+  <!-- Pantalla de Login / Registro -->
+  <div id="pantalla-login" class="oculto">
+    <div>
+      <div class="login-card">
+        <h1>Mi Horario</h1>
+        <p class="subtitulo">Organiza tu semana con elegancia</p>
+        <div class="login-tabs">
+          <button type="button" id="tab-login" class="tab activo">Iniciar sesión</button>
+          <button type="button" id="tab-registro" class="tab">Crear cuenta</button>
+        </div>
+        <form id="form-login">
+          <input type="email" id="login-email" placeholder="Correo electrónico" required>
+          <input type="password" id="login-password" placeholder="Contraseña (mín 6 carácteres)" required minlength="6">
+          <p id="login-error" class="error oculto"></p>
+          <button type="submit" id="btn-login-submit" class="btn-principal">Ingresar</button>
+        </form>
       </div>
     </div>
-  </main>
+  </div>
 
-  <button id="btn-generar-imagen" class="btn-flotante" type="button">📸 Descargar Imagen</button>
-</div>
+  <!-- Aplicación Principal -->
+  <div id="pantalla-app" class="oculto">
+    <nav class="navbar">
+      <span class="logo">🌸 Horario</span>
+      <div class="nav-derecha">
+        <span id="banner-error" class="badge-error oculto">Error de conexión (Usa Live Server)</span>
+        <span id="usuario-email"></span>
+        <button id="btn-logout" class="btn-secundario oculto" type="button">Salir</button>
+      </div>
+    </nav>
 
-<!-- Modal para agregar tareas haciendo clic en la celda -->
-<div id="modal-agregar" class="modal-overlay oculto">
-  <div class="modal">
-    <h3 id="modal-titulo">Agregar Actividad</h3>
-    
-    <div class="modal-campo">
-      <label for="input-nota">Descripción (Ej: Reunión)</label>
-      <input type="text" id="input-nota" placeholder="Escribe aquí..." maxlength="40" autocomplete="off">
-    </div>
-    
-    <div class="modal-campo">
-      <label>Elige un ícono</label>
-      <div id="selector-iconos" class="iconos-grid"></div>
-    </div>
-    
-    <div class="modal-botones">
-      <button type="button" id="btn-cancelar-modal" class="btn-secundario">Cancelar</button>
-      <button type="button" id="btn-guardar-entrada" class="btn-principal">Guardar</button>
+    <div id="mensaje-guardado" class="toast oculto">Sincronizado en la nube ✓</div>
+
+    <main>
+      <!-- Esta es la hoja A4 como la de Canva -->
+      <div id="capture-area">
+        <div class="decoracion-clip">📎</div>
+        <div class="decoracion-sparkle">✨</div>
+        
+        <div class="titulo-horario">
+          <div class="titulo-pildora">HORARIO</div>
+        </div>
+        
+        <div class="tabla-contenedor">
+          <table class="tabla-horario">
+            <thead>
+              <tr>
+                <th>Horas</th>
+                <th>Lunes</th>
+                <th>Martes</th>
+                <th>Miércoles</th>
+                <th>Jueves</th>
+                <th>Viernes</th>
+              </tr>
+            </thead>
+            <tbody id="horario-tbody">
+              <!-- Renderizado por app.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <button id="btn-generar-imagen" class="btn-flotante" type="button">📸 Descargar Imagen</button>
+  </div>
+
+  <!-- Modal para agregar tareas -->
+  <div id="modal-agregar" class="modal-overlay oculto">
+    <div class="modal">
+      <h3 id="modal-titulo">Agregar Actividad</h3>
+      <div class="modal-campo">
+        <label for="input-nota">Descripción (Ej: Reunión)</label>
+        <input type="text" id="input-nota" placeholder="Escribe aquí..." maxlength="40" autocomplete="off">
+      </div>
+      <div class="modal-campo">
+        <label>Elige un ícono</label>
+        <div id="selector-iconos" class="iconos-grid"></div>
+      </div>
+      <div class="modal-botones">
+        <button type="button" id="btn-cancelar-modal" class="btn-secundario">Cancelar</button>
+        <button type="button" id="btn-guardar-entrada" class="btn-principal">Guardar</button>
+      </div>
     </div>
   </div>
-</div>
 
-<div id="modal-imagen" class="modal-overlay oculto">
-  <div class="modal modal-imagen-contenido">
-    <h3>¡Listo para imprimir o compartir! 🎉</h3>
-    <img id="imagen-generada" alt="Imagen generada">
-    <div class="modal-botones">
-      <button type="button" id="btn-cerrar-imagen" class="btn-secundario">Volver</button>
-      <a id="btn-descargar" class="btn-principal" download="horario-elegante.png">Descargar PNG</a>
+  <!-- Modal para ver/descargar la imagen generada -->
+  <div id="modal-imagen" class="modal-overlay oculto">
+    <div class="modal modal-imagen-contenido">
+      <h3>¡Listo para compartir! 🎉</h3>
+      <img id="imagen-generada" alt="Imagen generada">
+      <div class="modal-botones">
+        <button type="button" id="btn-cerrar-imagen" class="btn-secundario">Volver</button>
+        <a id="btn-descargar" class="btn-principal" download="horario-elegante.png">Descargar PNG</a>
+      </div>
     </div>
   </div>
-</div>
 
-<script type="module">
-  // ============================================================
-  // CONFIGURACIÓN DE FIREBASE 
-  // ============================================================
-  const firebaseConfig = {
-    apiKey: "AIzaSyBLzPOb6AbR3-2NqLkG0ETVWXeWY7tY7iI",
-    authDomain: "horarios-3f609.firebaseapp.com",
-    projectId: "horarios-3f609",
-    storageBucket: "horarios-3f609.firebasestorage.app",
-    messagingSenderId: "1002586000808",
-    appId: "1:1002586000808:web:27004906e10133064c219d",
-    measurementId: "G-0VGK0HWR4B"
-  };
-  // ============================================================
-
-  const DIAS = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'];
-  // Aquí puedes agregar más horas o modificarlas según necesites
-  const HORAS = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
-  const ICONOS = ['📚', '💼', '🏋️', '☕', '😴', '✨', '🛒', '💻', '❤️', '📌'];
-
-  let horario = {};
-  DIAS.forEach(d => horario[d] = []);
-
-  let diaSeleccionado = null;
-  let horaSeleccionada = null;
-  let iconoSeleccionado = ICONOS[0];
-  
-  let auth = null, db = null, authFns = null, fsFns = null, usuarioActual = null;
-  let modoLocal = true, modoFormulario = 'login';
-  const $ = (sel) => document.querySelector(sel);
-
-  function generarId() {
-    return (crypto.randomUUID ? crypto.randomUUID() : 'id-' + Date.now());
-  }
-
-  function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-  }
-
-  // ---------- RENDERIZAR TABLA ESTILO IMAGEN ----------
-  function renderizarHorario() {
-    const tbody = $('#horario-tbody');
-    tbody.innerHTML = HORAS.map(hora => `
-      <tr>
-        <td>${hora}</td>
-        ${DIAS.map(dia => {
-          const tareasCelda = (horario[dia] || []).filter(t => t.hora === hora);
-          const htmlTareas = tareasCelda.map(t => `
-            <div class="tarea">
-              <div class="tarea-info">
-                <span>${t.icono}</span>
-                <span class="tarea-texto">${escapeHtml(t.nota)}</span>
-              </div>
-              <button class="btn-eliminar solo-editar" data-dia="${dia}" data-id="${t.id}" title="Borrar" type="button">✕</button>
-            </div>
-          `).join('');
-          
-          return `<td data-dia="${dia}" data-hora="${hora}">
-                    <div class="celda-contenido">${htmlTareas}</div>
-                  </td>`;
-        }).join('')}
-      </tr>
-    `).join('');
-  }
-
-  // ---------- EVENTOS EN LA TABLA ----------
-  $('#horario-tbody').addEventListener('click', (e) => {
-    // Si se hace clic en borrar
-    const btnEliminar = e.target.closest('.btn-eliminar');
-    if (btnEliminar) {
-      eliminarEntrada(btnEliminar.dataset.dia, btnEliminar.dataset.id);
-      return;
-    }
-    
-    // Si se hace clic en la celda para agregar (y no estamos exportando)
-    const celda = e.target.closest('td[data-dia]');
-    if (celda && !document.body.classList.contains('exportando')) {
-      abrirModal(celda.dataset.dia, celda.dataset.hora);
-    }
-  });
-
-  // ---------- MODAL ----------
-  function construirSelectorIconos() {
-    $('#selector-iconos').innerHTML = ICONOS.map(ic => 
-      `<div class="icono-opcion ${ic === iconoSeleccionado ? 'seleccionado' : ''}" data-icono="${ic}">${ic}</div>`
-    ).join('');
-  }
-
-  $('#selector-iconos').addEventListener('click', (e) => {
-    const op = e.target.closest('.icono-opcion');
-    if (!op) return;
-    iconoSeleccionado = op.dataset.icono;
-    construirSelectorIconos();
-  });
-
-  function abrirModal(dia, hora) {
-    diaSeleccionado = dia;
-    horaSeleccionada = hora;
-    
-    const nombresDias = { lunes: 'Lunes', martes: 'Martes', miercoles: 'Miércoles', jueves: 'Jueves', viernes: 'Viernes' };
-    $('#modal-titulo').textContent = `${nombresDias[dia]} a las ${hora}`;
-    
-    $('#input-nota').value = '';
-    iconoSeleccionado = ICONOS[0];
-    construirSelectorIconos();
-    $('#modal-agregar').classList.remove('oculto');
-    setTimeout(() => $('#input-nota').focus(), 100);
-  }
-
-  $('#btn-cancelar-modal').addEventListener('click', () => $('#modal-agregar').classList.add('oculto'));
-
-  $('#btn-guardar-entrada').addEventListener('click', () => {
-    const nota = $('#input-nota').value.trim();
-    if (!nota) {
-      alert('Escribe una descripción para guardar ✏️');
-      return;
-    }
-    horario[diaSeleccionado].push({ id: generarId(), hora: horaSeleccionada, nota, icono: iconoSeleccionado });
-    renderizarHorario();
-    $('#modal-agregar').classList.add('oculto');
-    guardarDatos();
-  });
-
-  function eliminarEntrada(dia, id) {
-    horario[dia] = horario[dia].filter(e => e.id !== id);
-    renderizarHorario();
-    guardarDatos();
-  }
-
-  // ---------- GUARDADO (LOCAL O FIREBASE) ----------
-  function mostrarToast(msg) {
-    const t = $('#mensaje-guardado');
-    t.textContent = msg;
-    t.classList.remove('oculto');
-    clearTimeout(mostrarToast._t);
-    mostrarToast._t = setTimeout(() => t.classList.add('oculto'), 2000);
-  }
-
-  async function guardarDatos() {
-    if (modoLocal) {
-      localStorage.setItem('horario-elegante', JSON.stringify(horario));
-      mostrarToast('Guardado en el navegador ✓');
-      return;
-    }
-    if (usuarioActual && db && fsFns) {
-      try {
-        await fsFns.setDoc(fsFns.doc(db, 'horarios', usuarioActual.uid), { dias: horario });
-        mostrarToast('Sincronizado en la nube ✓');
-      } catch (err) {
-        console.error(err);
-        mostrarToast('Error al guardar 😕');
-      }
-    }
-  }
-
-  function cargarLocal() {
-    const raw = localStorage.getItem('horario-elegante');
-    if (raw) {
-      try { horario = { ...horario, ...JSON.parse(raw) }; } catch (e) {}
-    }
-  }
-
-  async function cargarNube(uid) {
-    try {
-      const snap = await fsFns.getDoc(fsFns.doc(db, 'horarios', uid));
-      if (snap.exists() && snap.data().dias) {
-        horario = { ...horario, ...snap.data().dias };
-      }
-    } catch (err) { console.error(err); }
-    renderizarHorario();
-  }
-
-  // ---------- CAPTURA DE IMAGEN ----------
-  $('#btn-generar-imagen').addEventListener('click', async () => {
-    const area = $('#capture-area');
-    document.body.classList.add('exportando');
-    await new Promise(r => setTimeout(r, 100)); // Esperar aplicación de CSS
-    try {
-      const canvas = await html2canvas(area, { backgroundColor: '#F9F7F5', scale: 2 });
-      const dataUrl = canvas.toDataURL('image/png');
-      $('#imagen-generada').src = dataUrl;
-      $('#btn-descargar').href = dataUrl;
-      $('#modal-imagen').classList.remove('oculto');
-    } catch (err) {
-      alert('Error al generar la imagen. 😕');
-    } finally {
-      document.body.classList.remove('exportando');
-    }
-  });
-  $('#btn-cerrar-imagen').addEventListener('click', () => $('#modal-imagen').classList.add('oculto'));
-
-  // ---------- LOGICA DE LOGIN Y PANTALLAS ----------
-  $('#tab-login').addEventListener('click', () => cambiarTab('login'));
-  $('#tab-registro').addEventListener('click', () => cambiarTab('registro'));
-
-  function cambiarTab(modo) {
-    modoFormulario = modo;
-    $('#tab-login').classList.toggle('activo', modo === 'login');
-    $('#tab-registro').classList.toggle('activo', modo === 'registro');
-    $('#btn-login-submit').textContent = modo === 'login' ? 'Ingresar' : 'Crear cuenta';
-    $('#login-error').classList.add('oculto');
-  }
-
-  $('#form-login').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (!authFns || !auth) return;
-    const email = $('#login-email').value.trim();
-    const password = $('#login-password').value;
-    $('#login-error').classList.add('oculto');
-    $('#btn-login-submit').disabled = true;
-    try {
-      if (modoFormulario === 'login') {
-        await authFns.signInWithEmailAndPassword(auth, email, password);
-      } else {
-        await authFns.createUserWithEmailAndPassword(auth, email, password);
-      }
-    } catch (err) {
-      const errMsgs = { 'auth/invalid-credential': 'Datos incorrectos.', 'auth/email-already-in-use': 'El correo ya existe.', 'auth/weak-password': 'Mínimo 6 caracteres.' };
-      $('#login-error').textContent = errMsgs[err.code] || 'Ocurrió un error.';
-      $('#login-error').classList.remove('oculto');
-    } finally {
-      $('#btn-login-submit').disabled = false;
-    }
-  });
-
-  $('#btn-logout').addEventListener('click', () => authFns && auth && authFns.signOut(auth));
-
-  function mostrarPantalla(id) {
-    ['#pantalla-carga', '#pantalla-login', '#pantalla-app'].forEach(s => $(s).classList.add('oculto'));
-    $(id).classList.remove('oculto');
-  }
-
-  // ---------- INICIO DE LA APLICACIÓN ----------
-  async function iniciar() {
-    construirSelectorIconos();
-    const estaConfigurado = firebaseConfig.apiKey && firebaseConfig.apiKey !== 'TU_API_KEY_AQUI';
-
-    if (estaConfigurado) {
-      try {
-        const v = '12.17.0';
-        const [{ initializeApp }, authModule, fsModule] = await Promise.all([
-          import(`https://www.gstatic.com/firebasejs/${v}/firebase-app.js`),
-          import(`https://www.gstatic.com/firebasejs/${v}/firebase-auth.js`),
-          import(`https://www.gstatic.com/firebasejs/${v}/firebase-firestore.js`)
-        ]);
-        authFns = authModule; fsFns = fsModule;
-        const app = initializeApp(firebaseConfig);
-        auth = authFns.getAuth(app); db = fsFns.getFirestore(app);
-        modoLocal = false;
-
-        authFns.onAuthStateChanged(auth, async (user) => {
-          if (user) {
-            usuarioActual = user;
-            $('#usuario-email').textContent = user.email;
-            $('#btn-logout').classList.remove('oculto');
-            $('#banner-local').classList.add('oculto');
-            mostrarPantalla('#pantalla-app');
-            await cargarNube(user.uid);
-          } else {
-            usuarioActual = null;
-            mostrarPantalla('#pantalla-login');
-          }
-        });
-        return;
-      } catch (err) {
-        console.warn('Fallo Firebase, activando modo local.', err);
-        modoLocal = true;
-      }
-    }
-
-    modoLocal = true;
-    cargarLocal();
-    renderizarHorario();
-    $('#banner-local').classList.remove('oculto');
-    $('#btn-logout').classList.add('oculto');
-    mostrarPantalla('#pantalla-app');
-  }
-
-  iniciar();
-</script>
-
+  <!-- Conectamos la lógica -->
+  <script type="module" src="app.js"></script>
 </body>
 </html>

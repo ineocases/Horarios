@@ -554,7 +554,7 @@ function mostrarPantalla(id) {
   if (target) target.classList.remove('oculto');
 }
 // ==========================
-// INSTALAR WIDGET
+// INSTALAR WIDGET Y TUTORIAL
 // ==========================
 
 $("#btn-instalar-widget")?.addEventListener("click", instalarWidget);
@@ -577,16 +577,47 @@ async function instalarWidget() {
       creado: serverTimestamp()
     });
     
-    // 3. Armamos automáticamente la URL de tu función de Netlify
+    // 3. Armamos automáticamente la URL
     const urlNetlify = `https://friendly-melba-0783ef.netlify.app/.netlify/functions/horario?token=${token}`;
     
-    // 4. Copiamos la URL al portapapeles y te la mostramos en un cuadro de texto fácil de copiar
+    // 4. Copiamos la URL al portapapeles
     navigator.clipboard.writeText(urlNetlify);
     
-    prompt("✨ ¡Enlace de tu widget generado con éxito!\n(Ya se copió al portapapeles. Pégalo en tu Atajo de iOS):", urlNetlify);
+    // 5. Llenamos el input del modal con la URL y lo mostramos
+    const inputUrl = $("#widget-url");
+    if (inputUrl) inputUrl.value = urlNetlify;
+    
+    $("#modal-widget")?.classList.remove("oculto");
 
   } catch (e) {
     console.error("Error detallado:", e);
     alert("Error al crear el widget. Revisá la consola.");
   }
 }
+
+// ------------------------------------
+// Eventos del Modal del Widget
+// ------------------------------------
+$("#btn-cerrar-widget")?.addEventListener("click", () => {
+  $("#modal-widget")?.classList.add("oculto");
+});
+
+$("#btn-copiar-url")?.addEventListener("click", () => {
+  const inputUrl = $("#widget-url");
+  if (inputUrl && inputUrl.value) {
+    navigator.clipboard.writeText(inputUrl.value);
+    
+    // Efecto visual dinámico en el botón al copiar
+    const btn = $("#btn-copiar-url");
+    const textoOriginal = btn.textContent;
+    btn.textContent = "¡Copiado!";
+    btn.style.background = "#E87A90";
+    btn.style.color = "white";
+    
+    setTimeout(() => {
+      btn.textContent = textoOriginal;
+      btn.style.background = "";
+      btn.style.color = "";
+    }, 2000);
+  }
+});

@@ -25,13 +25,12 @@ document.head.appendChild(estiloWidgetExtra);
 
 document.addEventListener('DOMContentLoaded', async () => {
     const contenedor = document.getElementById('contenedor-visual');
-    if (!contenedor) return;
 
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token');
 
     if (!token) {
-        contenedor.innerHTML = `<div class="estado-vacio">❌ Falta el token en la URL. Volvé a generarlo desde la app.</div>`;
+        if (contenedor) contenedor.innerHTML = `<div class="estado-vacio">❌ Falta el token en la URL. Volvé a generarlo desde la app.</div>`;
         return;
     }
 
@@ -43,7 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const widgetSnap = await getDoc(doc(db, "widgets", token));
         
         if (!widgetSnap.exists()) {
-            contenedor.innerHTML = `<div class="estado-vacio">❌ Token inválido o expirado. Generá uno nuevo en tu app.</div>`;
+            if (contenedor) contenedor.innerHTML = `<div class="estado-vacio">❌ Token inválido o expirado. Generá uno nuevo en tu app.</div>`;
             return;
         }
 
@@ -51,23 +50,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         const planillaSnap = await getDoc(doc(db, "planilla_estetica", uid));
         
         if (!planillaSnap.exists()) {
-            contenedor.innerHTML = `<div class="estado-vacio">📅 No hay datos guardados en tu planilla.</div>`;
+            if (contenedor) contenedor.innerHTML = `<div class="estado-vacio">📅 No hay datos guardados en tu planilla.</div>`;
             return;
         }
 
         const datos = planillaSnap.data();
         const tareas = datos.tareas || [];
-        const filasDefinidas = datos.filas || ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00'];
+        const filasDefinidas = datos.filas || ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
 
-        // Calcular qué día es HOY y MAÑANA
-        const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-        const hoyIndex = new Date().getDay();
-        const hoyStr = diasSemana[hoyIndex];
-        
-        const mananaIndex = (hoyIndex + 1) % 7;
-        const mananaStr = diasSemana[mananaIndex];
+        const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
 
-        // Agrupar horas consecutivas con la misma nota
+        // Función para agrupar horas consecutivas con la misma nota
         function agruparTareasDelDia(tareasDelDia) {
             if (!tareasDelDia || tareasDelDia.length === 0) return [];
 
@@ -81,8 +74,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 if (!grupoActual) {
                     grupoActual = {
-                        nota: t.nota,
-                        icono: t.icono,
+                        nombre: t.nota,
+                        icono: t.icono || '📌',
                         startIndex: rowIndex,
                         endIndex: rowIndex,
                         startRow: t.row,
@@ -90,16 +83,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                     };
                 } else {
                     const esConsecutivo = rowIndex === grupoActual.endIndex + 1;
-                    const mismoContenido = grupoActual.nota === t.nota && grupoActual.icono === t.icono;
+                    const mismoContenido = grupoActual.nombre === t.nota && grupoActual.icono === (t.icono || '📌');
 
                     if (esConsecutivo && mismoContenido) {
                         grupoActual.endIndex = rowIndex;
                         grupoActual.endRow = t.row;
                     } else {
+                        grupoActual.rango = grupoActual.startRow === grupoActual.endRow 
+                            ? grupoActual.startRow 
+                            : `${grupoActual.startRow} a ${grupoActual.endRow}`;
                         grupos.push(grupoActual);
+
                         grupoActual = {
-                            nota: t.nota,
-                            icono: t.icono,
+                            nombre: t.nota,
+                            icono: t.icono || '📌',
                             startIndex: rowIndex,
                             endIndex: rowIndex,
                             startRow: t.row,
@@ -108,51 +105,57 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 }
             }
-            if (grupoActual) grupos.push(grupoActual);
+            if (grupoActual) {
+                grupoActual.rango = grupoActual.startRow === grupoActual.endRow 
+                    ? grupoActual.startRow 
+                    : `${grupoActual.startRow} a ${grupoActual.endRow}`;
+                grupos.push(grupoActual);
+            }
             return grupos;
         }
 
-        const gruposHoy = agruparTareasDelDia(tareas.filter(t => t.col === hoyStr));
-        const gruposManana = agruparTareasDelDia(tareas.filter(t => t.col === mananaStr));
+        // Estructurar datos para toda la semana
+        const resultadoSemana = {};
+        diasSemana.forEach(dia => {
+            resultadoSemana[dia] = agruparTareasDelDia(tareas.filter(t => t.col === dia));
+        });
 
-        function renderizarBloque(nombreDia, etiqueta, grupos) {
-            let contenidoHtml = '';
-            
-            if (grupos.length === 0) {
-                contenidoHtml = `<div class="dia-libre">☕ Día libre</div>`;
-            } else {
-                contenidoHtml = grupos.map(g => {
-                    const rangoHorario = g.startRow === g.endRow 
-                        ? g.startRow 
-                        : `${g.startRow} a ${g.endRow}`;
+        // 1. Exportar en un tag <script id="datos-json"> para Scriptable
+        let elJson = document.getElementById('datos-json');
+        if (!elJson) {
+            elJson = document.createElement('script');
+            elJson.id = 'datos-json';
+            elJson.type = 'application/json';
+            document.body.appendChild(elJson);
+        }
+        elJson.textContent = JSON.stringify(resultadoSemana);
 
-                    return `
+        // 2. Renderizado visual HTML estándar
+        if (contenedor) {
+            let html = '';
+            diasSemana.forEach(dia => {
+                const grupos = resultadoSemana[dia];
+                let contenidoHtml = '';
+                if (grupos.length === 0) {
+                    contenidoHtml = `<div class="dia-libre">☕ Libre</div>`;
+                } else {
+                    contenidoHtml = grupos.map(g => `
                         <div class="tarea-item">
-                            <span>${g.icono || '📌'}</span>
+                            <span>${g.icono}</span>
                             <div style="flex: 1;">
-                                <div style="font-size: 11px; font-weight: bold; color: #d6336c; margin-bottom: 2px;">
-                                    ${rangoHorario}
-                                </div>
-                                <div style="color: #333; font-weight: 500;">${g.nota}</div>
+                                <div style="font-size: 11px; font-weight: bold; color: #d6336c; margin-bottom: 2px;">${g.rango}</div>
+                                <div style="color: #333; font-weight: 500;">${g.nombre}</div>
                             </div>
                         </div>
-                    `;
-                }).join('');
-            }
-
-            return `
-                <div class="seccion-dia">
-                    <div class="titulo-dia">${etiqueta} (${nombreDia})</div>
-                    ${contenidoHtml}
-                </div>
-            `;
+                    `).join('');
+                }
+                html += `<div class="seccion-dia"><div class="titulo-dia">${dia}</div>${contenidoHtml}</div>`;
+            });
+            contenedor.innerHTML = html;
         }
-
-        contenedor.innerHTML = renderizarBloque(hoyStr, '🔥 HOY', gruposHoy) + 
-                               renderizarBloque(mananaStr, '📅 MAÑANA', gruposManana);
 
     } catch (error) {
         console.error(error);
-        contenedor.innerHTML = `<div class="estado-vacio">⚠️ Error de conexión: ${error.message}</div>`;
+        if (contenedor) contenedor.innerHTML = `<div class="estado-vacio">⚠️ Error de conexión: ${error.message}</div>`;
     }
 });

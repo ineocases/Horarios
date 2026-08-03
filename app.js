@@ -23,30 +23,43 @@ let iconoSeleccionado = ICONOS[0];
 let auth = null, db = null, usuarioActual = null, modoFormulario = 'login';
 const $ = (sel) => document.querySelector(sel);
 
-// MOSTRAR LA APLANILLA DE INMEDIATO (Evita que se quede cargando)
+// Iniciar aplicación
 document.addEventListener('DOMContentLoaded', () => {
-  mostrarPantalla('#pantalla-app');
+  cargarDatosLocales(); // Carga datos guardados en el navegador por seguridad
   renderizarTabla();
   inicializarFirebaseSeguro();
 });
 
 function inicializarFirebaseSeguro() {
+  // Evitar pantalla de carga infinita (si en 2 segundos Firebase no responde, muestra el login)
+  let firebaseRespondió = false;
+  setTimeout(() => {
+    if (!firebaseRespondió) mostrarPantalla('#pantalla-login');
+  }, 2000);
+
   try {
     const app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     db = getFirestore(app);
 
     onAuthStateChanged(auth, async (user) => {
+      firebaseRespondió = true;
       if (user) {
         usuarioActual = user;
         if ($('#usuario-email')) $('#usuario-email').textContent = user.email;
         if ($('#btn-logout')) $('#btn-logout').classList.remove('oculto');
+        mostrarPantalla('#pantalla-app');
         await cargarBaseDeDatos(user.uid);
+      } else {
+        // AQUÍ ESTABA EL ERROR: Faltaba esta línea para mostrar el registro/login
+        usuarioActual = null;
+        mostrarPantalla('#pantalla-login');
       }
     });
   } catch (error) {
-    console.warn("Modo local activo:", error);
+    console.warn("Error de Firebase, Modo local activo:", error);
     if ($('#banner-error')) $('#banner-error').classList.remove('oculto');
+    mostrarPantalla('#pantalla-login');
   }
 }
 
@@ -111,7 +124,7 @@ $('#btn-guardar-config')?.addEventListener('click', () => {
   
   $('#modal-config')?.classList.add('oculto');
   renderizarTabla();
-  guardarBaseDeDatos();
+  guardarDatos();
 });
 
 // Renderizar la Tabla
@@ -150,13 +163,13 @@ function renderizarTabla() {
   }
 }
 
-// Interacciones de la planilla
+// Interacciones
 $('#horario-tbody')?.addEventListener('click', (e) => {
   const btnBorrar = e.target.closest('.btn-eliminar-tarea');
   if (btnBorrar) {
     tareas = tareas.filter(t => t.id !== btnBorrar.dataset.id);
     renderizarTabla();
-    guardarBaseDeDatos();
+    guardarDatos();
     return;
   }
   const celda = e.target.closest('td[data-col]');
@@ -200,20 +213,39 @@ $('#btn-guardar-entrada')?.addEventListener('click', () => {
   if (nota) {
     tareas.push({ id: Date.now().toString(), col: colSeleccionada, row: rowSeleccionada, nota, icono: iconoSeleccionado });
     renderizarTabla();
-    guardarBaseDeDatos();
+    guardarDatos();
     $('#modal-agregar')?.classList.add('oculto');
   } else {
     alert("Escribe una descripción.");
   }
 });
 
-// Firestore
-async function guardarBaseDeDatos() {
+// Guardar Datos (Local y Nube)
+async function guardarDatos() {
+  // 1. Guardar siempre en la memoria local del navegador
+  localStorage.setItem('miPlanillaEstetica', JSON.stringify({ columnas, filas, tareas }));
+
+  // 2. Si hay usuario, guardar en Firebase
   if (usuarioActual && db) {
     try {
       await setDoc(doc(db, 'planilla_estetica', usuarioActual.uid), { columnas, filas, tareas });
       mostrarNotificacion('Guardado 💖');
-    } catch (err) { console.error("Error al guardar:", err); }
+    } catch (err) { 
+      console.error("Error al guardar en nube:", err); 
+      mostrarNotificacion('Guardado Local 📁');
+    }
+  } else {
+    mostrarNotificacion('Guardado Local 📁');
+  }
+}
+
+// Cargar Datos
+function cargarDatosLocales() {
+  const datosLocales = JSON.parse(localStorage.getItem('miPlanillaEstetica'));
+  if (datosLocales) {
+    if (datosLocales.columnas?.length > 0) columnas = datosLocales.columnas;
+    if (datosLocales.filas?.length > 0) filas = datosLocales.filas;
+    if (datosLocales.tareas) tareas = datosLocales.tareas;
   }
 }
 
@@ -223,9 +255,12 @@ async function cargarBaseDeDatos(uid) {
     const snap = await getDoc(doc(db, 'planilla_estetica', uid));
     if (snap.exists()) {
       const data = snap.data();
-      if (data.columnas && data.columnas.length > 0) columnas = data.columnas;
-      if (data.filas && data.filas.length > 0) filas = data.filas;
+      if (data.columnas?.length > 0) columnas = data.columnas;
+      if (data.filas?.length > 0) filas = data.filas;
       if (data.tareas) tareas = data.tareas;
+      
+      // Sincronizar los datos de la nube hacia el local
+      localStorage.setItem('miPlanillaEstetica', JSON.stringify({ columnas, filas, tareas }));
     }
   } catch (err) { console.error("Error al cargar:", err); }
   renderizarTabla();

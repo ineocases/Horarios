@@ -147,42 +147,31 @@
       <!-- Modal Tutorial Widget Scriptable -->
   <div id="modal-widget" class="modal-overlay oculto">
     <div class="modal modal-tutorial">
-      <h3>📲 Instalar Widget en iOS</h3>
-      <p class="subtitulo">Visualiza tu horario en tu pantalla usando Scriptable.</p>
-
-      <div class="pasos-tutorial">
-        <div class="paso">
-          <div class="paso-numero">1</div>
-          <div class="paso-texto">Descarga la app gratuita <b>Scriptable</b> desde la App Store en tu iPhone o iPad.</div>
-        </div>
-
-        <div class="paso">
-          <div class="paso-numero">2</div>
-          <div class="paso-texto">
-            Copia tu código personalizado listo para usar:
-            <div class="url-box">
-              <input type="text" value="/* Código Scriptable Listo ✨ */" readonly>
-              <button type="button" id="btn-copiar-url" class="btn-secundario">Copiar Código</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="paso">
-          <div class="paso-numero">3</div>
-          <div class="paso-texto">Abre <b>Scriptable</b>, toca <b>"+"</b> (arriba a la derecha), pega el código que copiaste y guárdalo con el nombre "Horarios".</div>
-        </div>
-
-        <div class="paso">
-          <div class="paso-numero">4</div>
-          <div class="paso-texto">Ve a tu pantalla de inicio, mantén presionado el fondo y toca <b>"+"</b>. Agrega el widget de Scriptable y en la opción "Script" selecciona "Horarios".</div>
-        </div>
-      </div>
-
-      <div class="modal-botones">
-        <button type="button" id="btn-cerrar-widget" class="btn-principal">¡Entendido!</button>
-      </div>
-    </div>
+<!-- Modal Instructivo para Scriptable (iOS) -->
+<div id="modal-widget" class="modal oculto">
+  <div class="modal-contenido" style="max-width: 350px; text-align: center; padding: 25px 20px;">
+    <!-- Botón de Cerrar -->
+    <span id="btn-cerrar-widget" class="btn-cerrar" style="position: absolute; top: 10px; right: 15px; font-size: 18px; cursor: pointer; color: #ff4d6d;">✕</span>
+    
+    <!-- Título -->
+    <h2 style="color: #D6336C; font-size: 20px; margin-top: 0; margin-bottom: 10px;">✨ Tu Widget de iOS</h2>
+    
+    <!-- Instrucciones -->
+    <p style="font-size: 14px; color: #555; margin-bottom: 15px;">Sigue estos pasos para llevar tu horario a la pantalla de inicio:</p>
+    
+    <ol style="font-size: 13px; color: #666; text-align: left; padding-left: 20px; line-height: 1.6; margin-bottom: 20px; background: #fff5f7; padding-top: 10px; padding-bottom: 10px; padding-right: 15px; border-radius: 10px; border: 1px dashed #ffb6c1;">
+      <li>Descarga la app <b>Scriptable</b> en la App Store.</li>
+      <li>Copia tu código con el botón de abajo.</li>
+      <li>Abre Scriptable, toca el <b>+</b> (arriba a la derecha), pega el código y presiona "Done".</li>
+      <li>Ve a tu inicio, añade un widget de Scriptable y selecciona tu nuevo script.</li>
+    </ol>
+    
+    <!-- Botón Inteligente de Copiado -->
+    <button id="btn-copiar-url" style="background: #D6336C; color: white; border: none; padding: 12px 20px; border-radius: 25px; font-weight: bold; cursor: pointer; width: 100%; font-size: 14px; box-shadow: 0 4px 10px rgba(214, 51, 108, 0.3); transition: all 0.3s ease;" data-codigo="">
+      📋 Copiar Código del Widget
+    </button>
   </div>
+</div>
   <script type="module" src="app.js"></script>
 </body>
 </html>

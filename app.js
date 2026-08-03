@@ -45,7 +45,6 @@ let colorSeleccionado = COLORES[0];
 let auth = null, db = null, usuarioActual = null, modoFormulario = 'login';
 const $ = (sel) => document.querySelector(sel);
 
-// Inyección de estilos de la tabla y bloques de tareas
 const estiloNuevasFunciones = document.createElement('style');
 estiloNuevasFunciones.innerHTML = `
   table { table-layout: fixed !important; width: 100% !important; border-collapse: collapse; }
@@ -54,51 +53,11 @@ estiloNuevasFunciones.innerHTML = `
   td { height: 42px !important; }
   .celda-contenido { min-height: 38px !important; display: flex; flex-direction: column; justify-content: center; gap: 3px; padding: 2px !important; }
 
-  .tarea-bloque {
-    position: relative !important;
-    padding: 6px 8px !important;
-    margin: 2px 0 !important;
-    font-size: 13px !important;
-    border-radius: 8px !important;
-    cursor: pointer;
-    user-select: none;
-    transition: transform 0.15s, box-shadow 0.15s;
-  }
+  .tarea-bloque { position: relative !important; padding: 6px 8px !important; margin: 2px 0 !important; font-size: 13px !important; border-radius: 8px !important; cursor: pointer; user-select: none; transition: transform 0.15s, box-shadow 0.15s; }
+  .tarea-acciones { display: none !important; position: absolute !important; top: -42px !important; left: 50% !important; transform: translateX(-50%) !important; background: #ffffff !important; border: 1px solid #ffb6c1 !important; padding: 4px 8px !important; border-radius: 20px !important; box-shadow: 0 4px 12px rgba(0,0,0,0.18) !important; z-index: 9999 !important; gap: 6px !important; align-items: center !important; white-space: nowrap; }
+  .tarea-bloque.seleccionada .tarea-acciones { display: flex !important; }
 
-  .tarea-acciones {
-    display: none !important;
-    position: absolute !important;
-    top: -42px !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    background: #ffffff !important;
-    border: 1px solid #ffb6c1 !important;
-    padding: 4px 8px !important;
-    border-radius: 20px !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.18) !important;
-    z-index: 9999 !important;
-    gap: 6px !important;
-    align-items: center !important;
-    white-space: nowrap;
-  }
-
-  .tarea-bloque.seleccionada .tarea-acciones {
-    display: flex !important;
-  }
-
-  .btn-editar-tarea, .btn-eliminar-tarea {
-    border: none !important;
-    background: #fff2f4 !important;
-    border-radius: 12px !important;
-    padding: 4px 8px !important;
-    cursor: pointer !important;
-    display: flex !important;
-    align-items: center !important;
-    gap: 3px !important;
-    font-size: 12px !important;
-    font-weight: bold !important;
-    color: #d6336c !important;
-  }
+  .btn-editar-tarea, .btn-eliminar-tarea { border: none !important; background: #fff2f4 !important; border-radius: 12px !important; padding: 4px 8px !important; cursor: pointer !important; display: flex !important; align-items: center !important; gap: 3px !important; font-size: 12px !important; font-weight: bold !important; color: #d6336c !important; }
   .btn-eliminar-tarea { color: #ff4d6d !important; }
 
   #barra-clases { display: flex; flex-direction: column; gap: 8px; margin: 12px auto; padding: 12px; background: #FFF2F4; border-radius: 15px; max-width: 900px; border: 2px dashed #ffb6c1; }
@@ -131,7 +90,6 @@ function crearBarraClasesHTML() {
 function renderizarBarraClases() {
   const barra = $('#barra-clases');
   if (!barra) return;
-  
   barra.innerHTML = `
     <div style="font-size: 13px; color: #666; font-weight: bold; text-align: center;">🎨 Tus Clases Rápidas (Selecciona una y toca el horario):</div>
     <div class="clases-lista">
@@ -219,14 +177,12 @@ function configurarEventosAuth() {
     $('#tab-registro').classList.remove('activo');
     $('#btn-login-submit').textContent = 'Ingresar';
   });
-
   $('#tab-registro')?.addEventListener('click', () => {
     modoFormulario = 'registro';
     $('#tab-registro').classList.add('activo');
     $('#tab-login').classList.remove('activo');
     $('#btn-login-submit').textContent = 'Crear Cuenta';
   });
-
   $('#form-login')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = $('#login-email')?.value.trim();
@@ -235,23 +191,15 @@ function configurarEventosAuth() {
     if (errBox) errBox.classList.add('oculto');
 
     try {
-      if (modoFormulario === 'login') {
-        await signInWithEmailAndPassword(auth, email, password);
-      } else {
-        await createUserWithEmailAndPassword(auth, email, password);
-      }
+      if (modoFormulario === 'login') await signInWithEmailAndPassword(auth, email, password);
+      else await createUserWithEmailAndPassword(auth, email, password);
     } catch (err) {
-      if (errBox) {
-        errBox.textContent = "Error: " + err.message;
-        errBox.classList.remove('oculto');
-      }
+      if (errBox) { errBox.textContent = "Error: " + err.message; errBox.classList.remove('oculto'); }
     }
   });
-
   $('#btn-logout')?.addEventListener('click', () => signOut(auth));
 }
 
-// Configuración de tabla (Filas y Columnas)
 $('#btn-abrir-config')?.addEventListener('click', () => {
   if ($('#input-cols')) $('#input-cols').value = columnas.join(', ');
   if ($('#input-rows')) $('#input-rows').value = filas.join(', ');
@@ -276,9 +224,7 @@ function renderizarTabla() {
   if (!filas.length) filas = ['08:00', '09:00', '10:00'];
 
   const thead = $('#horario-thead');
-  if (thead) {
-    thead.innerHTML = `<tr><th>Horario</th>${columnas.map(col => `<th>${col}</th>`).join('')}</tr>`;
-  }
+  if (thead) thead.innerHTML = `<tr><th>Horario</th>${columnas.map(col => `<th>${col}</th>`).join('')}</tr>`;
 
   const tbody = $('#horario-tbody');
   if (tbody) {
@@ -352,12 +298,8 @@ $('#horario-tbody')?.addEventListener('click', (e) => {
     document.querySelectorAll('.tarea-bloque.seleccionada').forEach(el => el.classList.remove('seleccionada'));
     if (claseActiva) {
       tareas.push({ 
-        id: Date.now().toString(), 
-        col: celda.dataset.col, 
-        row: celda.dataset.row, 
-        nota: claseActiva.nombre, 
-        icono: claseActiva.icono,
-        color: claseActiva.color || COLORES[0]
+        id: Date.now().toString(), col: celda.dataset.col, row: celda.dataset.row, 
+        nota: claseActiva.nombre, icono: claseActiva.icono, color: claseActiva.color || COLORES[0]
       });
       renderizarTabla();
       guardarDatos();
@@ -369,42 +311,27 @@ $('#horario-tbody')?.addEventListener('click', (e) => {
 
 function construirIconos() {
   const selector = $('#selector-iconos');
-  if (!selector) return;
-  selector.innerHTML = ICONOS.map(ic => `<div class="icono-opcion ${ic === iconoSeleccionado ? 'seleccionado' : ''}" data-icono="${ic}">${ic}</div>`).join('');
+  if (selector) selector.innerHTML = ICONOS.map(ic => `<div class="icono-opcion ${ic === iconoSeleccionado ? 'seleccionado' : ''}" data-icono="${ic}">${ic}</div>`).join('');
 }
-
 function construirColores() {
   const selector = $('#selector-colores');
-  if (!selector) return;
-  selector.innerHTML = COLORES.map(c => `<div class="color-opcion ${c === colorSeleccionado ? 'seleccionado' : ''}" data-color="${c}" style="background-color: ${c};"></div>`).join('');
+  if (selector) selector.innerHTML = COLORES.map(c => `<div class="color-opcion ${c === colorSeleccionado ? 'seleccionado' : ''}" data-color="${c}" style="background-color: ${c};"></div>`).join('');
 }
 
 $('#selector-iconos')?.addEventListener('click', (e) => {
-  const target = e.target.closest('.icono-opcion');
-  if (target?.dataset.icono) {
-    iconoSeleccionado = target.dataset.icono;
-    construirIconos();
-  }
+  if (e.target.closest('.icono-opcion')?.dataset.icono) { iconoSeleccionado = e.target.closest('.icono-opcion').dataset.icono; construirIconos(); }
 });
-
 $('#selector-colores')?.addEventListener('click', (e) => {
-  const target = e.target.closest('.color-opcion');
-  if (target?.dataset.color) {
-    colorSeleccionado = target.dataset.color;
-    construirColores();
-  }
+  if (e.target.closest('.color-opcion')?.dataset.color) { colorSeleccionado = e.target.closest('.color-opcion').dataset.color; construirColores(); }
 });
 
 function abrirModalTarea(col, row) {
   editandoTareaId = null;
-  colSeleccionada = col; 
-  rowSeleccionada = row;
+  colSeleccionada = col; rowSeleccionada = row;
   if ($('#modal-titulo')) $('#modal-titulo').textContent = `${col} • ${row}`;
   if ($('#input-nota')) $('#input-nota').value = '';
-  iconoSeleccionado = ICONOS[0];
-  colorSeleccionado = COLORES[0];
-  construirIconos();
-  construirColores();
+  iconoSeleccionado = ICONOS[0]; colorSeleccionado = COLORES[0];
+  construirIconos(); construirColores();
   $('#modal-agregar')?.classList.remove('oculto');
 }
 
@@ -415,14 +342,8 @@ $('#btn-guardar-entrada')?.addEventListener('click', () => {
   if (nota) {
     if (editandoTareaId) {
       const index = tareas.findIndex(t => t.id === editandoTareaId);
-      if (index !== -1) {
-        tareas[index].nota = nota;
-        tareas[index].icono = iconoSeleccionado;
-        tareas[index].color = colorSeleccionado;
-      }
-    } else {
-      tareas.push({ id: Date.now().toString(), col: colSeleccionada, row: rowSeleccionada, nota, icono: iconoSeleccionado, color: colorSeleccionado });
-    }
+      if (index !== -1) { tareas[index].nota = nota; tareas[index].icono = iconoSeleccionado; tareas[index].color = colorSeleccionado; }
+    } else { tareas.push({ id: Date.now().toString(), col: colSeleccionada, row: rowSeleccionada, nota, icono: iconoSeleccionado, color: colorSeleccionado }); }
     renderizarTabla();
     guardarDatos();
     $('#modal-agregar')?.classList.add('oculto');
@@ -432,9 +353,7 @@ $('#btn-guardar-entrada')?.addEventListener('click', () => {
 async function guardarDatos() {
   localStorage.setItem('miPlanillaEstetica', JSON.stringify({ columnas, filas, tareas, clasesDefinidas }));
   if (usuarioActual && db) {
-    try {
-      await setDoc(doc(db, 'planilla_estetica', usuarioActual.uid), { columnas, filas, tareas, clasesDefinidas });
-      mostrarNotificacion('Guardado 💖');
+    try { await setDoc(doc(db, 'planilla_estetica', usuarioActual.uid), { columnas, filas, tareas, clasesDefinidas }); mostrarNotificacion('Guardado 💖');
     } catch (err) { mostrarNotificacion('Guardado Local 📁'); }
   } else { mostrarNotificacion('Guardado Local 📁'); }
 }
@@ -442,10 +361,8 @@ async function guardarDatos() {
 function cargarDatosLocales() {
   const d = JSON.parse(localStorage.getItem('miPlanillaEstetica'));
   if (d) {
-    if (d.columnas?.length) columnas = d.columnas;
-    if (d.filas?.length) filas = d.filas;
-    if (d.tareas) tareas = d.tareas;
-    if (d.clasesDefinidas) clasesDefinidas = d.clasesDefinidas;
+    if (d.columnas?.length) columnas = d.columnas; if (d.filas?.length) filas = d.filas;
+    if (d.tareas) tareas = d.tareas; if (d.clasesDefinidas) clasesDefinidas = d.clasesDefinidas;
   }
 }
 
@@ -455,25 +372,20 @@ async function cargarBaseDeDatos(uid) {
     const snap = await getDoc(doc(db, 'planilla_estetica', uid));
     if (snap.exists()) {
       const data = snap.data();
-      if (data.columnas?.length) columnas = data.columnas;
-      if (data.filas?.length) filas = data.filas;
-      if (data.tareas) tareas = data.tareas;
-      if (data.clasesDefinidas) clasesDefinidas = data.clasesDefinidas;
+      if (data.columnas?.length) columnas = data.columnas; if (data.filas?.length) filas = data.filas;
+      if (data.tareas) tareas = data.tareas; if (data.clasesDefinidas) clasesDefinidas = data.clasesDefinidas;
     }
   } catch (err) {}
-  renderizarTabla();
-  renderizarBarraClases();
+  renderizarTabla(); renderizarBarraClases();
 }
 
 function mostrarNotificacion(msg) {
   const t = $('#mensaje-guardado');
   if (!t) return;
-  t.textContent = msg; 
-  t.classList.remove('oculto');
+  t.textContent = msg; t.classList.remove('oculto');
   setTimeout(() => t.classList.add('oculto'), 2000);
 }
 
-// Generación de Imagen HD
 $('#btn-generar-imagen')?.addEventListener('click', async () => {
   document.body.classList.add('exportando');
   await new Promise(r => setTimeout(r, 150)); 
@@ -514,7 +426,6 @@ async function obtenerTokenWidget() {
 async function instalarWidget(tipo) {
   const token = await obtenerTokenWidget();
   if (!token) return;
-
   const urlNetlify = `https://friendly-melba-0783ef.netlify.app/.netlify/functions/horario?token=${token}`;
   
   let codigoScriptable = "";
@@ -524,51 +435,140 @@ async function instalarWidget(tipo) {
     codigoScriptable = `const url = "${urlNetlify}";
 const req = new Request(url);
 const res = await req.loadString();
-
 let widget = new ListWidget();
 widget.backgroundColor = new Color("#FFF0F3");
-widget.url = "https://ineocases.github.io/Horarios/";
-
 let header = widget.addText("✨ Tu Horario");
 header.font = Font.boldSystemFont(14);
 header.textColor = new Color("#D6336C");
 widget.addSpacer(8);
-
 let contenido = widget.addText(res);
 contenido.font = Font.systemFont(12);
 contenido.textColor = new Color("#5C4A47");
-
 if (config.runsInWidget) { Script.setWidget(widget); } else { widget.presentSmall(); }
 Script.complete();`;
   } else {
-    // Widget 2: Ancho Estilo Canva (Usa loadString de forma 100% segura)
+    // Widget 2: PLANTILLA CANVA (Tabular, estético y agrupa los horarios)
     codigoScriptable = `const url = "${urlNetlify}";
 const req = new Request(url);
 const res = await req.loadString();
 
 let widget = new ListWidget();
-widget.backgroundColor = new Color("#FFF2F4");
-widget.setPadding(12, 16, 12, 16);
+widget.backgroundColor = new Color("#FFFFFF");
+widget.setPadding(12, 10, 12, 10);
 
-let header = widget.addText("🌸 MI SEMANA CANVA");
-header.font = Font.boldSystemFont(13);
-header.textColor = new Color("#D6336C");
-widget.addSpacer(6);
+// 1. Título principal centrado
+let titleStack = widget.addStack();
+titleStack.addSpacer();
+let title = titleStack.addText("🌸 Mi Planilla Semanal 🌸");
+title.font = Font.boldSystemFont(14);
+title.textColor = new Color("#F48FB1");
+titleStack.addSpacer();
+widget.addSpacer(12);
 
-if (!res || res.trim() === "") {
-  let txt = widget.addText("Sin actividades programadas ✨");
-  txt.font = Font.systemFont(11);
-  txt.textColor = new Color("#888888");
-} else {
-  let lineas = res.split("\\n");
-  lineas.forEach(linea => {
-    if (linea.trim()) {
-      let item = widget.addText(linea.trim());
-      item.font = Font.systemFont(11);
-      item.textColor = new Color("#333333");
-      widget.addSpacer(3);
+let mainStack = widget.addStack();
+mainStack.layoutHorizontally();
+mainStack.spacing = 6;
+
+let dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+let schedule = {};
+for (let d of dias) schedule[d] = [];
+
+// Parsear el texto proveniente de tu base de datos
+let lines = res.split("\\n");
+let currentDay = "Lunes";
+
+for (let line of lines) {
+  let l = line.trim();
+  if (!l) continue;
+  let matchedDay = dias.find(d => l.toLowerCase().includes(d.toLowerCase()));
+  if (matchedDay) {
+    currentDay = matchedDay;
+  } else {
+    if (schedule[currentDay]) schedule[currentDay].push(l);
+  }
+}
+
+// 2. MAGIA: Función que junta horarios iguales consecutivos (Ej: Inglés 10 a 16)
+function agrupar(tareas) {
+  let parsed = [];
+  for (let t of tareas) {
+    let match = t.match(/(\\d{1,2}:\\d{2})\\s*[-:]*\\s*(.*)/);
+    if (match) parsed.push({ t: match[1], n: match[2].trim() });
+    else parsed.push({ t: "", n: t.trim() });
+  }
+  
+  if (parsed.length === 0) return [];
+  let grouped = [];
+  let cur = { s: parsed[0].t, e: parsed[0].t, n: parsed[0].n };
+  
+  for (let i = 1; i < parsed.length; i++) {
+    if (parsed[i].n === cur.n && parsed[i].n !== "") {
+      cur.e = parsed[i].t;
+    } else {
+      grouped.push(cur);
+      cur = { s: parsed[i].t, e: parsed[i].t, n: parsed[i].n };
     }
-  });
+  }
+  grouped.push(cur);
+  return grouped;
+}
+
+// 3. Crear las columnas para Lunes a Viernes
+for (let d of ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"]) {
+  let col = mainStack.addStack();
+  col.layoutVertically();
+  
+  // Encabezado del día (Fondo rosita pastel)
+  let headerStack = col.addStack();
+  headerStack.backgroundColor = new Color("#FCE4EC");
+  headerStack.setPadding(4, 2, 4, 2);
+  headerStack.cornerRadius = 6;
+  headerStack.addSpacer();
+  let headerText = headerStack.addText(d.substring(0,3).toUpperCase());
+  headerText.font = Font.boldSystemFont(10);
+  headerText.textColor = new Color("#D81B60");
+  headerStack.addSpacer();
+  col.addSpacer(6);
+  
+  let tareasAgrupadas = agrupar(schedule[d]);
+  
+  if (tareasAgrupadas.length === 0) {
+    let emptyStack = col.addStack();
+    emptyStack.addSpacer();
+    let empty = emptyStack.addText("-");
+    empty.font = Font.systemFont(10);
+    empty.textColor = new Color("#E0E0E0");
+    emptyStack.addSpacer();
+  } else {
+    for (let task of tareasAgrupadas) {
+      if(!task.n) continue;
+      
+      // Contenedor de la actividad estética
+      let tStack = col.addStack();
+      tStack.layoutVertically();
+      tStack.backgroundColor = new Color("#FFF9FA");
+      tStack.setPadding(4, 4, 4, 4);
+      tStack.cornerRadius = 6;
+      tStack.borderColor = new Color("#FCE4EC");
+      tStack.borderWidth = 1;
+      
+      let tName = tStack.addText(task.n);
+      tName.font = Font.systemFont(9);
+      tName.textColor = new Color("#4A4A4A");
+      tName.lineLimit = 2;
+      tName.minimumScaleFactor = 0.8;
+      
+      if (task.s) {
+        tStack.addSpacer(2);
+        // Si el inicio y el fin son distintos, muestra "10:00 a 16:00"
+        let timeStr = (task.s !== task.e) ? (task.s + " a " + task.e) : task.s;
+        let tTime = tStack.addText(timeStr);
+        tTime.font = Font.boldSystemFont(8);
+        tTime.textColor = new Color("#D81B60");
+      }
+      col.addSpacer(4);
+    }
+  }
 }
 
 if (config.runsInWidget) { Script.setWidget(widget); } else { widget.presentMedium(); }
@@ -578,7 +578,7 @@ Script.complete();`;
   const btnCopiar = $("#btn-copiar-url");
   if (btnCopiar) btnCopiar.dataset.codigo = codigoScriptable;
   if ($("#titulo-modal-widget")) {
-    $("#titulo-modal-widget").textContent = tipo === 'v1' ? "✨ Widget 1 (Compacto)" : "🎨 Widget 2 (Ancho Canva)";
+    $("#titulo-modal-widget").textContent = tipo === 'v1' ? "✨ Widget 1 (Compacto)" : "🎨 Widget 2 (Plantilla Canva)";
   }
   
   $("#modal-widget")?.classList.remove("oculto");

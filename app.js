@@ -649,6 +649,4 @@ $("#btn-copiar-url")?.addEventListener("click", async (e) => {
     }, 2500);
   } catch (err) {
     alert("Tu navegador bloqueó la copia automática.");
-    
-    }
 }

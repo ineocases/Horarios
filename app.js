@@ -629,24 +629,25 @@ $("#btn-cerrar-widget")?.addEventListener("click", () => {
   $("#modal-widget")?.classList.add("oculto");
 });
 
-$("#btn-copiar-url")?.addEventListener("click", (e) => {
+$("#btn-copiar-url")?.addEventListener("click", async (e) => {
   const btn = e.target;
   const codigo = btn.dataset.codigo;
   
-  if (codigo) {
-    navigator.clipboard.writeText(codigo).then(() => {
-      const textoOriginal = btn.textContent;
-      btn.textContent = "¡Código Copiado! ✨";
-      btn.style.background = "#E87A90";
-      btn.style.color = "white";
-      
-      setTimeout(() => {
-        btn.textContent = textoOriginal;
-        btn.style.background = "";
-        btn.style.color = "";
-      }, 2500);
-    }).catch(() => {
-      alert("Tu navegador bloqueó la copia automática.");
-    });
+  if (!codigo) return;
+  
+  try {
+    await navigator.clipboard.writeText(codigo);
+    const textoOriginal = btn.textContent;
+    btn.textContent = "¡Código Copiado! ✨";
+    btn.style.background = "#E87A90";
+    btn.style.color = "white";
+    
+    setTimeout(() => {
+      btn.textContent = textoOriginal;
+      btn.style.background = "";
+      btn.style.color = "";
+    }, 2500);
+  } catch (err) {
+    alert("Tu navegador bloqueó la copia automática.");
   }
 });

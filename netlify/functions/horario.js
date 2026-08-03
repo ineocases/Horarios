@@ -9,7 +9,7 @@ const firebaseConfig = {
   messagingSenderId: "1002586000808",
   appId: "1:1002586000808:web:27004906e10133064c219d",
   measurementId: "G-0VGK0HWR4B"
-};
+}
 
 export async function handler(event) {
     const token = event.queryStringParameters && event.queryStringParameters.token;

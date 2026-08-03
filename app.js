@@ -566,21 +566,24 @@ async function instalarWidget() {
   }
 
   try {
-    // 1. PRIMERO creamos el token (la llave)
+    // 1. Creamos el token único
     const token = crypto.randomUUID();
     
-    // 2. DESPUÉS le decimos a Firebase que use ese token como ID del documento
+    // 2. Guardamos el token en Firebase vinculado a tu usuario
     const widgetRef = doc(db, "widgets", token);
-    
-    // 3. Guardamos los datos
     await setDoc(widgetRef, {
       uid: usuarioActual.uid,
       activo: true,
       creado: serverTimestamp()
     });
     
-    // 4. Si todo sale bien, abrimos la página del widget
-    window.open(`widget.html?token=${token}`, '_blank');
+    // 3. Armamos automáticamente la URL de tu función de Netlify
+    const urlNetlify = `https://friendly-melba-0783ef.netlify.app/.netlify/functions/horario?token=${token}`;
+    
+    // 4. Copiamos la URL al portapapeles y te la mostramos en un cuadro de texto fácil de copiar
+    navigator.clipboard.writeText(urlNetlify);
+    
+    prompt("✨ ¡Enlace de tu widget generado con éxito!\n(Ya se copió al portapapeles. Pégalo en tu Atajo de iOS):", urlNetlify);
 
   } catch (e) {
     console.error("Error detallado:", e);

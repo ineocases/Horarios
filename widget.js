@@ -1,61 +1,68 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// REEMPLAZA ESTO CON TU CONFIGURACIÓN EXACTA
+// REEMPLAZA ESTO CON TU CONFIGURACIÓN EXACTA DE FIREBASE
 const firebaseConfig = {
-  apiKey: "AIzaSyBLzPOb6AbR3-2NqLkG0ETVWXeWY7tY7iI",
-  authDomain: "horarios-3f609.firebaseapp.com",
-  projectId: "horarios-3f609",
-  storageBucket: "horarios-3f609.firebasestorage.app",
-  messagingSenderId: "1002586000808",
-  appId: "1:1002586000808:web:27004906e10133064c219d",
-  measurementId: "G-0VGK0HWR4B"
+  apiKey: "TU_API_KEY",
+  authDomain: "TU_PROYECTO.firebaseapp.com",
+  projectId: "TU_PROYECTO",
+  storageBucket: "TU_PROYECTO.appspot.com",
+  messagingSenderId: "TUS_NUMEROS",
+  appId: "TU_APP_ID"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-async function cargarDatosWidget() {
-    const output = document.getElementById('json-output');
+async function renderizarWidgetVisual() {
+    const contenedor = document.getElementById('contenedor-visual');
     
-    // 1. Obtener el token de la URL (ej: widget.html?token=1234-abcd)
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token');
 
     if (!token) {
-        output.textContent = JSON.stringify({ error: "Falta el token" });
+        contenedor.innerHTML = `<div class="estado-vacio">❌ Falta el token de acceso.</div>`;
         return;
     }
 
     try {
-        // 2. Buscar a qué usuario le pertenece este token
         const widgetSnap = await getDoc(doc(db, "widgets", token));
         
         if (!widgetSnap.exists()) {
-            output.textContent = JSON.stringify({ error: "Token inválido o expirado" });
+            contenedor.innerHTML = `<div class="estado-vacio">❌ Token inválido o expirado.</div>`;
             return;
         }
 
         const uid = widgetSnap.data().uid;
-
-        // 3. Buscar los horarios de ese usuario
         const planillaSnap = await getDoc(doc(db, "planilla_estetica", uid));
         
         if (!planillaSnap.exists()) {
-            output.textContent = JSON.stringify({ error: "No hay horarios guardados" });
+            contenedor.innerHTML = `<div class="estado-vacio">📅 No hay datos en tu planilla todavía.</div>`;
             return;
         }
 
-        const datosHorario = planillaSnap.data();
+        const datos = planillaSnap.data();
+        const tareas = datos.tareas || [];
 
-        // 4. Imprimir los datos en formato JSON puro
-        // El Atajo de iPad leerá este texto directamente
-        output.textContent = JSON.stringify(datosHorario, null, 2);
+        if (tareas.length === 0) {
+            contenedor.innerHTML = `<div class="estado-vacio">🎉 ¡No hay tareas cargadas por ahora!</div>`;
+            return;
+        }
+
+        // Generamos tarjetas visuales por cada tarea guardada
+        contenedor.innerHTML = tareas.map(t => `
+            <div class="tarea-item">
+                <span>${t.icono || '📌'}</span>
+                <div>
+                    <b>${t.col} • ${t.row}</b><br>
+                    <span style="color: #555;">${t.nota}</span>
+                </div>
+            </div>
+        `).join('');
 
     } catch (error) {
-        output.textContent = JSON.stringify({ error: error.message });
+        contenedor.innerHTML = `<div class="estado-vacio">⚠️ Error al cargar: ${error.message}</div>`;
     }
 }
 
-// Ejecutar al cargar la página
-cargarDatosWidget();
+renderizarWidgetVisual();

@@ -431,64 +431,93 @@ async function instalarWidget(tipo) {
   let codigoScriptable = "";
 
   if (tipo === 'v1') {
-    // Widget 1: Pequeño y compacto
     codigoScriptable = `const url = "${urlNetlify}";
 const req = new Request(url);
 const res = await req.loadString();
 let widget = new ListWidget();
-widget.backgroundColor = new Color("#FFF0F3");
+widget.backgroundColor = Color.dynamic(new Color("#FFF0F3"), new Color("#1E1B1C"));
 let header = widget.addText("✨ Tu Horario");
 header.font = Font.boldSystemFont(14);
-header.textColor = new Color("#D6336C");
+header.textColor = Color.dynamic(new Color("#D6336C"), new Color("#FF80AB"));
 widget.addSpacer(8);
 let contenido = widget.addText(res);
 contenido.font = Font.systemFont(12);
-contenido.textColor = new Color("#5C4A47");
+contenido.textColor = Color.dynamic(new Color("#5C4A47"), new Color("#E0E0E0"));
 if (config.runsInWidget) { Script.setWidget(widget); } else { widget.presentSmall(); }
 Script.complete();`;
   } else {
-    // Widget 2: PLANTILLA CANVA (Tabular, estético y agrupa los horarios)
+    // Widget 2: PLANTILLA CANVA ADAPTATIVA
     codigoScriptable = `const url = "${urlNetlify}";
 const req = new Request(url);
 const res = await req.loadString();
 
 let widget = new ListWidget();
-widget.backgroundColor = new Color("#FFFFFF");
-widget.setPadding(12, 10, 12, 10);
+// Colores dinámicos compatibles con Modo Personalizado / Oscuro de iOS
+widget.backgroundColor = Color.dynamic(new Color("#FFF2F4"), new Color("#1C1A1C"));
+widget.setPadding(10, 8, 10, 8);
 
-// 1. Título principal centrado
+// Título principal
 let titleStack = widget.addStack();
 titleStack.addSpacer();
 let title = titleStack.addText("🌸 Mi Planilla Semanal 🌸");
-title.font = Font.boldSystemFont(14);
-title.textColor = new Color("#F48FB1");
+title.font = Font.boldSystemFont(13);
+title.textColor = Color.dynamic(new Color("#D6336C"), new Color("#FF80AB"));
 titleStack.addSpacer();
-widget.addSpacer(12);
+widget.addSpacer(8);
 
 let mainStack = widget.addStack();
 mainStack.layoutHorizontally();
-mainStack.spacing = 6;
+mainStack.spacing = 4;
 
-let dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+let dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
 let schedule = {};
 for (let d of dias) schedule[d] = [];
 
-// Parsear el texto proveniente de tu base de datos
+let diasMapa = {
+  "domingo": "Domingo", "lunes": "Lunes", "martes": "Martes", 
+  "miércoles": "Miércoles", "miercoles": "Miércoles", 
+  "jueves": "Jueves", "viernes": "Viernes", "sábado": "Sábado", "sabado": "Sábado"
+};
+
+let diasNombres = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+let hoyObj = new Date();
+let hoyNombre = diasNombres[hoyObj.getDay()];
+let mananaObj = new Date();
+mananaObj.setDate(hoyObj.getDate() + 1);
+let mananaNombre = diasNombres[mananaObj.getDay()];
+
 let lines = res.split("\\n");
 let currentDay = "Lunes";
 
 for (let line of lines) {
   let l = line.trim();
   if (!l) continue;
-  let matchedDay = dias.find(d => l.toLowerCase().includes(d.toLowerCase()));
-  if (matchedDay) {
-    currentDay = matchedDay;
-  } else {
-    if (schedule[currentDay]) schedule[currentDay].push(l);
+  let lLower = l.toLowerCase();
+
+  // Ignorar etiquetas "Hoy" / "Mañana" como texto directo
+  if (lLower === "hoy:" || lLower === "hoy") {
+    currentDay = hoyNombre;
+    continue;
+  }
+  if (lLower === "mañana:" || lLower === "mañana" || lLower === "manana:" || lLower === "manana") {
+    currentDay = mananaNombre;
+    continue;
+  }
+
+  let matchedDayKey = Object.keys(diasMapa).find(k => lLower.startsWith(k) || lLower.includes(k));
+  if (matchedDayKey) {
+    currentDay = diasMapa[matchedDayKey];
+    let lClean = l.replace(/[^a-záéíóúñ]/gi, '').toLowerCase();
+    if (lClean === matchedDayKey) continue;
+  }
+
+  if (lLower.includes("tu horario") || lLower.includes("mi semana") || lLower.startsWith("---")) continue;
+
+  if (schedule[currentDay]) {
+    schedule[currentDay].push(l);
   }
 }
 
-// 2. MAGIA: Función que junta horarios iguales consecutivos (Ej: Inglés 10 a 16)
 function agrupar(tareas) {
   let parsed = [];
   for (let t of tareas) {
@@ -513,22 +542,20 @@ function agrupar(tareas) {
   return grouped;
 }
 
-// 3. Crear las columnas para Lunes a Viernes
-for (let d of ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"]) {
+for (let d of dias) {
   let col = mainStack.addStack();
   col.layoutVertically();
   
-  // Encabezado del día (Fondo rosita pastel)
   let headerStack = col.addStack();
-  headerStack.backgroundColor = new Color("#FCE4EC");
-  headerStack.setPadding(4, 2, 4, 2);
-  headerStack.cornerRadius = 6;
+  headerStack.backgroundColor = Color.dynamic(new Color("#FCE4EC"), new Color("#3A2229"));
+  headerStack.setPadding(3, 1, 3, 1);
+  headerStack.cornerRadius = 5;
   headerStack.addSpacer();
   let headerText = headerStack.addText(d.substring(0,3).toUpperCase());
-  headerText.font = Font.boldSystemFont(10);
-  headerText.textColor = new Color("#D81B60");
+  headerText.font = Font.boldSystemFont(9);
+  headerText.textColor = Color.dynamic(new Color("#D81B60"), new Color("#FF80AB"));
   headerStack.addSpacer();
-  col.addSpacer(6);
+  col.addSpacer(4);
   
   let tareasAgrupadas = agrupar(schedule[d]);
   
@@ -536,37 +563,35 @@ for (let d of ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"]) {
     let emptyStack = col.addStack();
     emptyStack.addSpacer();
     let empty = emptyStack.addText("-");
-    empty.font = Font.systemFont(10);
-    empty.textColor = new Color("#E0E0E0");
+    empty.font = Font.systemFont(9);
+    empty.textColor = Color.dynamic(new Color("#CCCCCC"), new Color("#555555"));
     emptyStack.addSpacer();
   } else {
     for (let task of tareasAgrupadas) {
-      if(!task.n) continue;
+      if (!task.n) continue;
       
-      // Contenedor de la actividad estética
       let tStack = col.addStack();
       tStack.layoutVertically();
-      tStack.backgroundColor = new Color("#FFF9FA");
-      tStack.setPadding(4, 4, 4, 4);
-      tStack.cornerRadius = 6;
-      tStack.borderColor = new Color("#FCE4EC");
+      tStack.backgroundColor = Color.dynamic(new Color("#FFFFFF"), new Color("#2C2C2E"));
+      tStack.setPadding(3, 3, 3, 3);
+      tStack.cornerRadius = 5;
+      tStack.borderColor = Color.dynamic(new Color("#FCE4EC"), new Color("#4A3238"));
       tStack.borderWidth = 1;
       
       let tName = tStack.addText(task.n);
-      tName.font = Font.systemFont(9);
-      tName.textColor = new Color("#4A4A4A");
+      tName.font = Font.systemFont(8);
+      tName.textColor = Color.dynamic(new Color("#222222"), new Color("#EEEEEE"));
       tName.lineLimit = 2;
-      tName.minimumScaleFactor = 0.8;
+      tName.minimumScaleFactor = 0.7;
       
       if (task.s) {
-        tStack.addSpacer(2);
-        // Si el inicio y el fin son distintos, muestra "10:00 a 16:00"
+        tStack.addSpacer(1);
         let timeStr = (task.s !== task.e) ? (task.s + " a " + task.e) : task.s;
         let tTime = tStack.addText(timeStr);
-        tTime.font = Font.boldSystemFont(8);
-        tTime.textColor = new Color("#D81B60");
+        tTime.font = Font.boldSystemFont(7);
+        tTime.textColor = Color.dynamic(new Color("#D81B60"), new Color("#FF80AB"));
       }
-      col.addSpacer(4);
+      col.addSpacer(3);
     }
   }
 }

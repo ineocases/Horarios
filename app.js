@@ -45,7 +45,7 @@ let colorSeleccionado = COLORES[0];
 let auth = null, db = null, usuarioActual = null, modoFormulario = 'login';
 const $ = (sel) => document.querySelector(sel);
 
-// Estilos inyectados
+// Inyección de estilos de la tabla y bloques de tareas
 const estiloNuevasFunciones = document.createElement('style');
 estiloNuevasFunciones.innerHTML = `
   table { table-layout: fixed !important; width: 100% !important; border-collapse: collapse; }
@@ -115,6 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
   crearBarraClasesHTML();
   renderizarTabla();
   inicializarFirebaseSeguro();
+  configurarEventosAuth();
 });
 
 function crearBarraClasesHTML() {
@@ -211,7 +212,46 @@ function inicializarFirebaseSeguro() {
   }
 }
 
-// Configuración de tabla
+function configurarEventosAuth() {
+  $('#tab-login')?.addEventListener('click', () => {
+    modoFormulario = 'login';
+    $('#tab-login').classList.add('activo');
+    $('#tab-registro').classList.remove('activo');
+    $('#btn-login-submit').textContent = 'Ingresar';
+  });
+
+  $('#tab-registro')?.addEventListener('click', () => {
+    modoFormulario = 'registro';
+    $('#tab-registro').classList.add('activo');
+    $('#tab-login').classList.remove('activo');
+    $('#btn-login-submit').textContent = 'Crear Cuenta';
+  });
+
+  $('#form-login')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = $('#login-email')?.value.trim();
+    const password = $('#login-password')?.value;
+    const errBox = $('#login-error');
+    if (errBox) errBox.classList.add('oculto');
+
+    try {
+      if (modoFormulario === 'login') {
+        await signInWithEmailAndPassword(auth, email, password);
+      } else {
+        await createUserWithEmailAndPassword(auth, email, password);
+      }
+    } catch (err) {
+      if (errBox) {
+        errBox.textContent = "Error: " + err.message;
+        errBox.classList.remove('oculto');
+      }
+    }
+  });
+
+  $('#btn-logout')?.addEventListener('click', () => signOut(auth));
+}
+
+// Configuración de tabla (Filas y Columnas)
 $('#btn-abrir-config')?.addEventListener('click', () => {
   if ($('#input-cols')) $('#input-cols').value = columnas.join(', ');
   if ($('#input-rows')) $('#input-rows').value = filas.join(', ');
@@ -433,7 +473,7 @@ function mostrarNotificacion(msg) {
   setTimeout(() => t.classList.add('oculto'), 2000);
 }
 
-// Descargar Imagen
+// Generación de Imagen HD
 $('#btn-generar-imagen')?.addEventListener('click', async () => {
   document.body.classList.add('exportando');
   await new Promise(r => setTimeout(r, 150)); 
@@ -454,11 +494,22 @@ function mostrarPantalla(id) {
 }
 
 // ==========================================
-// WIDGET 1 (Compacto) & WIDGET 2 (Ancho Canva)
+// GENERACIÓN DE CÓDIGO DE WIDGETS
 // ==========================================
 
 $("#btn-instalar-widget")?.addEventListener("click", () => instalarWidget('v1'));
 $("#btn-instalar-widget-2")?.addEventListener("click", () => instalarWidget('v2'));
+
+async function obtenerTokenWidget() {
+  if (!usuarioActual) { alert("Debes iniciar sesión para generar tu widget."); return null; }
+  const q = query(collection(db, "widgets"), where("uid", "==", usuarioActual.uid));
+  const querySnapshot = await getDocs(q);
+  if (!querySnapshot.empty) return querySnapshot.docs[0].id;
+
+  const token = Date.now().toString(36) + Math.random().toString(36).substring(2);
+  await setDoc(doc(db, "widgets", token), { uid: usuarioActual.uid, activo: true, creado: serverTimestamp() });
+  return token;
+}
 
 async function instalarWidget(tipo) {
   const token = await obtenerTokenWidget();
@@ -469,7 +520,7 @@ async function instalarWidget(tipo) {
   let codigoScriptable = "";
 
   if (tipo === 'v1') {
-    // Widget 1: Compacto (Pequeño)
+    // Widget 1: Pequeño y compacto
     codigoScriptable = `const url = "${urlNetlify}";
 const req = new Request(url);
 const res = await req.loadString();
@@ -490,7 +541,7 @@ contenido.textColor = new Color("#5C4A47");
 if (config.runsInWidget) { Script.setWidget(widget); } else { widget.presentSmall(); }
 Script.complete();`;
   } else {
-    // Widget 2: Ancho Estilo Canva (Mediano / Grande)
+    // Widget 2: Ancho Estilo Canva (Usa loadString de forma 100% segura)
     codigoScriptable = `const url = "${urlNetlify}";
 const req = new Request(url);
 const res = await req.loadString();
@@ -502,20 +553,21 @@ widget.setPadding(12, 16, 12, 16);
 let header = widget.addText("🌸 MI SEMANA CANVA");
 header.font = Font.boldSystemFont(13);
 header.textColor = new Color("#D6336C");
-widget.addSpacer(8);
+widget.addSpacer(6);
 
-let lineas = res.split("\\n").filter(l => l.trim() !== "");
-
-if (lineas.length === 0) {
+if (!res || res.trim() === "") {
   let txt = widget.addText("Sin actividades programadas ✨");
   txt.font = Font.systemFont(11);
   txt.textColor = new Color("#888888");
 } else {
+  let lineas = res.split("\\n");
   lineas.forEach(linea => {
-    let item = widget.addText(linea);
-    item.font = Font.systemFont(11);
-    item.textColor = new Color("#333333");
-    widget.addSpacer(3);
+    if (linea.trim()) {
+      let item = widget.addText(linea.trim());
+      item.font = Font.systemFont(11);
+      item.textColor = new Color("#333333");
+      widget.addSpacer(3);
+    }
   });
 }
 
@@ -530,7 +582,9 @@ Script.complete();`;
   }
   
   $("#modal-widget")?.classList.remove("oculto");
-}$("#btn-cerrar-widget")?.addEventListener("click", () => $("#modal-widget")?.classList.add("oculto"));
+}
+
+$("#btn-cerrar-widget")?.addEventListener("click", () => $("#modal-widget")?.classList.add("oculto"));
 
 $("#btn-copiar-url")?.addEventListener("click", async (e) => {
   const btn = e.target;

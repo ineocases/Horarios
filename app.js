@@ -12,10 +12,10 @@ const firebaseConfig = {
   measurementId: "G-0VGK0HWR4B"
 };
 
-// Columnas (Días) y Filas (Horarios o Secciones)
+// Valores por defecto garantizados
 let columnas = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
 let filas = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00'];
-let tareas = []; // { id, col, row, nota, icono }
+let tareas = [];
 
 const ICONOS = ['🌸', '💼', '📚', '☕', '🏋️', '✨', '💻', '🛒', '❤️', '📌'];
 let colSeleccionada = null, rowSeleccionada = null;
@@ -96,7 +96,7 @@ $('#btn-logout')?.addEventListener('click', () => {
   if (auth) signOut(auth);
 });
 
-// Configurar Filas y Columnas de la Planilla
+// Configurar Filas y Columnas
 $('#btn-abrir-config')?.addEventListener('click', () => {
   if ($('#input-cols')) $('#input-cols').value = columnas.join(', ');
   if ($('#input-rows')) $('#input-rows').value = filas.join(', ');
@@ -111,13 +111,9 @@ $('#btn-guardar-config')?.addEventListener('click', () => {
   const nuevasCols = $('#input-cols')?.value.split(',').map(s => s.trim()).filter(Boolean);
   const nuevasFilas = $('#input-rows')?.value.split(',').map(s => s.trim()).filter(Boolean);
   
-  if (!nuevasCols || nuevasCols.length === 0 || !nuevasFilas || nuevasFilas.length === 0) {
-    alert("Debes tener al menos 1 columna y 1 fila.");
-    return;
-  }
+  if (nuevasCols && nuevasCols.length > 0) columnas = nuevasCols;
+  if (nuevasFilas && nuevasFilas.length > 0) filas = nuevasFilas;
 
-  columnas = nuevasCols;
-  filas = nuevasFilas;
   tareas = tareas.filter(t => columnas.includes(t.col) && filas.includes(t.row));
   
   $('#modal-config')?.classList.add('oculto');
@@ -125,40 +121,43 @@ $('#btn-guardar-config')?.addEventListener('click', () => {
   guardarBaseDeDatos();
 });
 
-// Renderizar la Tabla / Planilla Estética
+// Renderizar la Tabla de forma segura
 function renderizarTabla() {
-  const thead = $('#horario-thead');
-  if (!thead) return;
+  if (!columnas || columnas.length === 0) columnas = ['Lunes', 'Martes', 'Miércoles'];
+  if (!filas || filas.length === 0) filas = ['08:00', '09:00', '10:00'];
 
-  thead.innerHTML = `<tr>
-    <th>Horario</th>
-    ${columnas.map(col => `<th>${col}</th>`).join('')}
-  </tr>`;
+  const thead = $('#horario-thead');
+  if (thead) {
+    thead.innerHTML = `<tr>
+      <th>Horario</th>
+      ${columnas.map(col => `<th>${col}</th>`).join('')}
+    </tr>`;
+  }
 
   const tbody = $('#horario-tbody');
-  if (!tbody) return;
-
-  tbody.innerHTML = filas.map(fila => `
-    <tr>
-      <td>${fila}</td>
-      ${columnas.map(col => {
-        const tareasCelda = tareas.filter(t => t.col === col && t.row === fila);
-        const html = tareasCelda.map(t => `
-          <div class="tarea-bloque">
-            <div class="tarea-info">
-              <span>${t.icono}</span>
-              <span class="tarea-texto">${t.nota}</span>
+  if (tbody) {
+    tbody.innerHTML = filas.map(fila => `
+      <tr>
+        <td>${fila}</td>
+        ${columnas.map(col => {
+          const tareasCelda = tareas.filter(t => t.col === col && t.row === fila);
+          const html = tareasCelda.map(t => `
+            <div class="tarea-bloque">
+              <div class="tarea-info">
+                <span>${t.icono}</span>
+                <span class="tarea-texto">${t.nota}</span>
+              </div>
+              <button type="button" class="btn-eliminar-tarea solo-editar" data-id="${t.id}">✕</button>
             </div>
-            <button type="button" class="btn-eliminar-tarea solo-editar" data-id="${t.id}">✕</button>
-          </div>
-        `).join('');
-        return `<td data-col="${col}" data-row="${fila}"><div class="celda-contenido">${html}</div></td>`;
-      }).join('')}
-    </tr>
-  `).join('');
+          `).join('');
+          return `<td data-col="${col}" data-row="${fila}"><div class="celda-contenido">${html}</div></td>`;
+        }).join('')}
+      </tr>
+    `).join('');
+  }
 }
 
-// Clics en la planilla (Agregar o borrar tarea)
+// Interacciones
 $('#horario-tbody')?.addEventListener('click', (e) => {
   const btnBorrar = e.target.closest('.btn-eliminar-tarea');
   if (btnBorrar) {
@@ -231,8 +230,8 @@ async function cargarBaseDeDatos(uid) {
     const snap = await getDoc(doc(db, 'planilla_estetica', uid));
     if (snap.exists()) {
       const data = snap.data();
-      if (data.columnas) columnas = data.columnas;
-      if (data.filas) filas = data.filas;
+      if (data.columnas && data.columnas.length > 0) columnas = data.columnas;
+      if (data.filas && data.filas.length > 0) filas = data.filas;
       if (data.tareas) tareas = data.tareas;
     }
   } catch (err) { console.error("Error al cargar:", err); }
@@ -255,7 +254,7 @@ $('#btn-generar-imagen')?.addEventListener('click', async () => {
     const captureArea = $('#capture-area');
     if (!captureArea) return;
     const canvas = await html2canvas(captureArea, { backgroundColor: '#FFF2F4', scale: 2 });
-    if ($('#imagen-generada')) $('#imagen-generada').src = canvas.toDataURL('image/png');
+    if ($('#imagen-generada')) $('#imagen-generada'].src = canvas.toDataURL('image/png');
     if ($('#btn-descargar')) $('#btn-descargar').href = canvas.toDataURL('image/png');
     $('#modal-imagen')?.classList.remove('oculto');
   } finally { 

@@ -8,7 +8,8 @@ import {
     query,
     where,
     getDocs
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+};
+from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBLzPOb6AbR3-2NqLkG0ETVWXeWY7tY7iI",
